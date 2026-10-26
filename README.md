@@ -29,6 +29,23 @@ npm run dev
 - Python con GeoPandas: `...\193. Datos territoriales censo 2024 IA\app_censo_santiago\.venv\Scripts\python.exe scripts\prepare_data.py`
 - Node.js portable: `...\193. Datos territoriales censo 2024 IA\app_censo_santiago\.herramientas\node-v22.11.0-win-x64\`. Agréguelo al PATH de la sesión antes de `npm install`.
 
+## Publicación
+
+- **Sitio público:** https://fcosargent.github.io/visor-ds68/
+- **Repositorio:** https://github.com/fcosargent/visor-ds68
+
+Cada cambio que se sube a la rama `main` se compila y se publica solo, mediante el flujo `.github/workflows/deploy.yml`. Tarda uno o dos minutos, y después basta con refrescar el navegador.
+
+Para actualizar:
+
+1. Si cambiaron los shapefiles, ejecutar `python scripts/prepare_data.py`.
+2. Comprobar que compila con `npm run build`.
+3. Subir los cambios con `git add -A`, `git commit -m "..."` y `git push`.
+
+Notas:
+- Git y GitHub CLI se instalaron con winget. En una terminal abierta antes de esa instalación puede hacer falta usar las rutas completas: `C:\Program Files\Git\cmd\git.exe` y `C:\Program Files\GitHub CLI\gh.exe`.
+- El sitio es público. `index.html` pide a los buscadores que no lo indexen (`noindex`), pero cualquiera que tenga el link puede verlo.
+
 ## Campos utilizados (nombres físicos verificados)
 
 Los alias de ArcMap (`CUMPLE 1`, `20M CONDB`, `VIAL DS68`, `METRO 600`) corresponden a estos nombres físicos en el `.dbf`:
