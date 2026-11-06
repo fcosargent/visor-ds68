@@ -20,8 +20,10 @@ Siete condiciones, organizadas en dos grupos. Se ve una condición a la vez.
 | Densidad | 4 | `P4_DEN14` | Densidad: factor 1,4 | 547 | 38,0 % |
 
 - **Cifras de manzanas:** son las oficiales, sobre un total de 1.441. Se comprobaron contra los datos: coinciden exactamente.
-- **Recuadro sobre el mapa:** muestra el título, el porcentaje, las manzanas y la explicación de la condición activa.
-- **Leyenda:** está en la esquina inferior izquierda e incluye solo las capas encendidas.
+- **Recuadro de resumen:** está arriba a la izquierda del mapa y muestra el título, el porcentaje, las manzanas y la explicación de la condición activa.
+- **Leyenda:** está abajo a la izquierda e incluye solo las capas encendidas, en el mismo orden del panel de capas.
+- **Mover y cambiar el tamaño:** el resumen y la leyenda se arrastran a cualquier parte del mapa y se agrandan o achican desde su esquina inferior derecha (todo el contenido escala junto). Doble clic los devuelve a su posición y tamaño iniciales. La imagen exportada los incluye tal como están.
+- **Orden de capas:** en «Capas de referencia», los botones ▲ ▼ suben o bajan cada capa; las de más arriba se dibujan encima. Los predios de la condición seleccionada también se pueden mover. Los nombres de calles siempre quedan sobre todo lo demás.
 - **Popup del predio:** muestra el código catastral, la zona, qué permite la condición, las normas de la zona y un ejercicio referencial.
 - **«Descargar imagen (JPG)»:** exporta la vista actual con título, cifras, leyenda, escala, norte, fecha y fuente. El archivo se llama `DS68_<campo>.jpg`.
 

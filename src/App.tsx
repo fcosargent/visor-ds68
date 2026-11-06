@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { REFERENCE_LAYERS, fileName } from './config/layers';
+import { ORDEN_CONDICION, REFERENCE_LAYERS, fileName, type LayerConfig } from './config/layers';
 import { METADATA } from './config/metadata';
 import { CONDICIONES, condicionPorCampo } from './config/condiciones';
 import { loadAvailableFiles } from './lib/data';
@@ -9,11 +9,19 @@ import MapView from './components/MapView';
 import ConditionPanel from './components/ConditionPanel';
 import MapSummary from './components/MapSummary';
 import MapLegend from './components/MapLegend';
-import LayerPanel from './components/LayerPanel';
+import LayerPanel, { ID_CONDICION } from './components/LayerPanel';
 import NormativePanel from './components/NormativePanel';
 import SourcesPanel from './components/SourcesPanel';
 
 type Panel = 'normativa' | 'fuentes' | null;
+
+/** Orden inicial de las capas (de arriba hacia abajo), según `order` de layers.ts. */
+const ORDEN_INICIAL = [
+  ...REFERENCE_LAYERS.map((l) => ({ id: l.id, order: l.order })),
+  { id: ID_CONDICION, order: ORDEN_CONDICION },
+]
+  .sort((a, b) => b.order - a.order)
+  .map((l) => l.id);
 
 const hoy = () => new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
 
@@ -30,6 +38,7 @@ export default function App() {
   const [exporting, setExporting] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
   const [normas, setNormas] = useState<NormasData | null>(null);
+  const [orden, setOrden] = useState<string[]>(ORDEN_INICIAL);
   const mapWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,6 +68,31 @@ export default function App() {
   const references = useMemo(() => REFERENCE_LAYERS.filter((l) => isAvailable(l.id, l.url)), [isAvailable]);
   const activeReferences = useMemo(() => references.filter((l) => activeRefs.has(l.id)), [references, activeRefs]);
   const condicion = useMemo(() => condicionPorCampo(campo), [campo]);
+
+  // Capas disponibles en el orden del panel; null = predios de la condición activa.
+  const items = useMemo(
+    () =>
+      orden
+        .map((id) => (id === ID_CONDICION ? null : references.find((l) => l.id === id)))
+        .filter((l): l is LayerConfig | null => l !== undefined),
+    [orden, references],
+  );
+  const itemsLeyenda = useMemo(() => items.filter((l) => l === null || activeRefs.has(l.id)), [items, activeRefs]);
+  const ordenes = useMemo(() => Object.fromEntries(orden.map((id, i) => [id, orden.length - i])), [orden]);
+
+  /** Sube o baja una capa, intercambiándola con su vecina visible en el panel. */
+  const moverCapa = (id: string, paso: -1 | 1) => {
+    const visibles = items.map((l) => l?.id ?? ID_CONDICION);
+    const vecina = visibles[visibles.indexOf(id) + paso];
+    if (!vecina) return;
+    setOrden((prev) => {
+      const next = [...prev];
+      const a = next.indexOf(id);
+      const b = next.indexOf(vecina);
+      [next[a], next[b]] = [next[b], next[a]];
+      return next;
+    });
+  };
 
   const toggleRef = (id: string) =>
     setActiveRefs((prev) => {
@@ -104,7 +138,13 @@ export default function App() {
         <aside className="sidebar">
           <ConditionPanel activa={condicion} onSelect={setCampo} />
           {availableFiles !== undefined && (
-            <LayerPanel layers={references} active={activeRefs} onToggle={toggleRef} />
+            <LayerPanel
+              items={items}
+              condicion={condicion}
+              active={activeRefs}
+              onToggle={toggleRef}
+              onMove={moverCapa}
+            />
           )}
           <p className="disclaimer">{METADATA.avisoReferencial}</p>
         </aside>
@@ -114,6 +154,7 @@ export default function App() {
             <MapView
               condicion={condicion}
               references={activeReferences}
+              ordenes={ordenes}
               normas={normas}
               onCount={setCount}
               onLoadingChange={setLoading}
@@ -121,7 +162,7 @@ export default function App() {
             />
           )}
           <MapSummary condicion={condicion} predios={count} />
-          <MapLegend condicion={condicion} references={activeReferences} />
+          <MapLegend condicion={condicion} items={itemsLeyenda} />
           <div className="north-arrow" aria-label="Norte">
             <svg viewBox="0 0 24 36" aria-hidden="true">
               <path d="M12 2 L20 26 L12 21 L4 26 Z" fill="#33383d" />

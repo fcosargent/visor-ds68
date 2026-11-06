@@ -4,7 +4,7 @@
     {
       "id": "conjunto_armonico",
       "titulo": "Conjunto Armónico",
-      "introduccion": "Un 'conjunto armónico' es un proyecto que, por ubicarse frente a calles anchas, puede construir más de lo que permite normalmente el Plan Regulador.",
+      "introduccion": "El Conjunto armónico corresponde a una norma de excepción, a la que se pueden acoger los proyectos inmobiliarios, siempre y cuando cumplan con condiciones de dimensión o localización y ampliación. La condición de un proyecto como conjunto armónico los habilita para aumentar la altura máxima de edificación y la constructibilidad por sobre las normas establecidas por el PRC.",
       "recuadro": { "fondo": "#FFF1EE", "borde": "#F2B3A6", "acento": "#D9534F" },
       "simbologia": { "relleno": "#FF7F7F", "contorno": "#6E6E6E", "grosor": 0.7, "opacidadRelleno": 0.85 },
       "planos": [
@@ -19,7 +19,7 @@
               "variante": "Situación base",
               "manzanas": 887,
               "porcentaje": 61.6,
-              "texto": "Predios que enfrentan una calle de al menos 20 metros de ancho (existente o proyectada) y que podrían acogerse a Conjunto Armónico. Se excluyen las zonas donde no se permite vivienda, las zonas F y G proyectada, las estaciones de metro y los estacionamientos subterráneos.",
+              "texto": "Predios que enfrentan una calle de al menos 20 metros de ancho (existente o proyectada) y que podrían acogerse a Conjunto Armónico. Se excluyen las zonas donde no se permite vivienda, las zonas con incentivo normativo de plan regulador vigente, las áreas verdes públicas y privadas existentes, estaciones de metro y los estacionamientos subterráneos.",
               "resumen": "Puede acogerse a Conjunto Armónico por enfrentar una calle de 20 m o más.",
               "ejercicio": null
             }

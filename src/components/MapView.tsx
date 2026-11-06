@@ -2,17 +2,20 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Feature, FeatureCollection } from 'geojson';
-import { ORDEN_CONDICION, PREDIOS_URL, type LayerConfig } from '../config/layers';
+import { PREDIOS_URL, type LayerConfig } from '../config/layers';
 import { METADATA } from '../config/metadata';
 import type { CondicionActiva } from '../config/condiciones';
 import { loadGeoJSON } from '../lib/data';
 import type { NormasData, PredioProps } from '../lib/normas';
 import { predioPopup } from '../lib/popup';
 import { StreetLabelLayer } from '../lib/streetLabels';
+import { ID_CONDICION } from './LayerPanel';
 
 interface Props {
   condicion: CondicionActiva;
   references: LayerConfig[];
+  /** Orden de dibujo por id de capa (mayor = más arriba); incluye ID_CONDICION. */
+  ordenes: Record<string, number>;
   normas: NormasData | null;
   onCount: (n: number | null) => void;
   onLoadingChange: (loading: boolean) => void;
@@ -20,7 +23,7 @@ interface Props {
 }
 
 interface ActiveLayer {
-  order: number;
+  id: string;
   layer: L.Layer;
 }
 
@@ -77,7 +80,15 @@ function buildCondicionLayer(
   });
 }
 
-export default function MapView({ condicion, references, normas, onCount, onLoadingChange, onLayerUnavailable }: Props) {
+export default function MapView({
+  condicion,
+  references,
+  ordenes,
+  normas,
+  onCount,
+  onLoadingChange,
+  onLayerUnavailable,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const rendererRef = useRef<L.Renderer | null>(null);
@@ -88,6 +99,8 @@ export default function MapView({ condicion, references, normas, onCount, onLoad
   const firstFitRef = useRef(true);
   const normasRef = useRef(normas);
   normasRef.current = normas;
+  const ordenesRef = useRef(ordenes);
+  ordenesRef.current = ordenes;
 
   // Callbacks en refs para no reiniciar efectos cuando cambian.
   const cb = useRef({ onCount, onLoadingChange, onLayerUnavailable });
@@ -102,12 +115,13 @@ export default function MapView({ condicion, references, normas, onCount, onLoad
     });
   };
 
-  /** Ordena el dibujo según `order` (un único lienzo comparte todas las capas). */
+  /** Ordena el dibujo según el orden del panel (un único lienzo comparte todas las capas). */
   const reorder = () => {
     const all = [...refsRef.current.values()];
     if (condicionRef.current) all.push(condicionRef.current);
+    const orden = (a: ActiveLayer) => ordenesRef.current[a.id] ?? 0;
     all
-      .sort((a, b) => a.order - b.order)
+      .sort((a, b) => orden(a) - orden(b))
       .forEach((a) => a.layer instanceof L.FeatureGroup && a.layer.bringToFront());
   };
 
@@ -116,9 +130,11 @@ export default function MapView({ condicion, references, normas, onCount, onLoad
     const map = L.map(containerRef.current!, {
       center: METADATA.vistaInicial.centro,
       zoom: METADATA.vistaInicial.zoom,
-      zoomControl: true,
+      zoomControl: false,
       preferCanvas: true,
     });
+    // Zoom a la derecha: la columna izquierda queda para el resumen y la leyenda.
+    L.control.zoom({ position: 'topright' }).addTo(map);
     // crossOrigin: necesario para exportar el mapa como imagen.
     L.tileLayer(METADATA.mapaBase.url, {
       attribution: METADATA.mapaBase.atribucion,
@@ -173,7 +189,7 @@ export default function MapView({ condicion, references, normas, onCount, onLoad
       .then((data) => {
         if (stale) return;
         const layer = buildCondicionLayer(condicion, data, rendererRef.current!, () => normasRef.current).addTo(map);
-        condicionRef.current = { order: ORDEN_CONDICION, layer };
+        condicionRef.current = { id: ID_CONDICION, layer };
         reorder();
         cb.current.onCount(layer.getLayers().length);
         if (firstFitRef.current) {
@@ -219,7 +235,7 @@ export default function MapView({ condicion, references, normas, onCount, onLoad
                   pane: PANE_CALLES,
                 }).addTo(current)
               : buildLayer(config, data, rendererRef.current!).addTo(current);
-          refsRef.current.set(config.id, { order: config.order, layer });
+          refsRef.current.set(config.id, { id: config.id, layer });
           reorder();
         })
         .catch((err) => {
@@ -228,6 +244,11 @@ export default function MapView({ condicion, references, normas, onCount, onLoad
         });
     }
   }, [references]);
+
+  // Cambio de orden en el panel de capas.
+  useEffect(() => {
+    reorder();
+  }, [ordenes]);
 
   return <div ref={containerRef} className="map" role="application" aria-label="Mapa" />;
 }
