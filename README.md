@@ -27,6 +27,8 @@ Siete condiciones, organizadas en dos grupos. Se ve una condición a la vez.
 - **Popup del predio:** muestra el código catastral, la zona, qué permite la condición, las normas de la zona y un ejercicio referencial.
 - **«Descargar imagen (JPG)»:** exporta la vista actual con título, cifras, leyenda, escala, norte, fecha y fuente. El archivo se llama `DS68_<campo>.jpg`.
 
+- **Mapa base sin textos:** se usa la versión vectorial de Esri «Light Gray Canvas Base», dibujada con MapLibre, sin ninguna etiqueta (ni comunas, ni calles, ni parques). Los nombres de calles los entrega solo la capa oficial «Nombres de calles». Si el mapa vectorial no carga, se usa el mapa raster equivalente, que trae algunos nombres grabados desde el zoom 15 (`src/lib/basemap.ts`).
+
 ## Cómo editar textos y parámetros
 
 ### `src/config/condiciones.json`

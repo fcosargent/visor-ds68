@@ -5,6 +5,7 @@ import type { Feature, FeatureCollection } from 'geojson';
 import { PREDIOS_URL, type LayerConfig } from '../config/layers';
 import { METADATA } from '../config/metadata';
 import type { CondicionActiva } from '../config/condiciones';
+import { agregarMapaBase } from '../lib/basemap';
 import { loadGeoJSON } from '../lib/data';
 import type { NormasData, PredioProps } from '../lib/normas';
 import { predioPopup } from '../lib/popup';
@@ -135,30 +136,8 @@ export default function MapView({
     });
     // Zoom a la derecha: la columna izquierda queda para el resumen y la leyenda.
     L.control.zoom({ position: 'topright' }).addTo(map);
-    // crossOrigin: necesario para exportar el mapa como imagen.
-    L.tileLayer(METADATA.mapaBase.url, {
-      attribution: METADATA.mapaBase.atribucion,
-      maxNativeZoom: METADATA.mapaBase.zoomNativoMax,
-      maxZoom: 20,
-      crossOrigin: 'anonymous',
-    }).addTo(map);
-    map.createPane('etiquetas');
-    map.getPane('etiquetas')!.style.zIndex = '450';
-    map.getPane('etiquetas')!.style.pointerEvents = 'none';
-    const etiquetasBase = L.tileLayer(METADATA.mapaBase.urlEtiquetas, {
-      pane: 'etiquetas',
-      maxNativeZoom: METADATA.mapaBase.zoomNativoMax,
-      maxZoom: 20,
-      crossOrigin: 'anonymous',
-    });
-    // Se quita la capa (no basta con maxZoom: Leaflet deja las teselas previas ampliadas).
-    const ajustarEtiquetasBase = () => {
-      const mostrar = map.getZoom() <= METADATA.mapaBase.zoomMaxEtiquetas;
-      if (mostrar && !map.hasLayer(etiquetasBase)) etiquetasBase.addTo(map);
-      else if (!mostrar && map.hasLayer(etiquetasBase)) map.removeLayer(etiquetasBase);
-    };
-    map.on('zoomend', ajustarEtiquetasBase);
-    ajustarEtiquetasBase();
+    // Mapa base sin textos (ver lib/basemap.ts).
+    agregarMapaBase(map, () => mapRef.current === map);
     map.createPane(PANE_CALLES);
     map.getPane(PANE_CALLES)!.style.zIndex = '460';
     map.getPane(PANE_CALLES)!.style.pointerEvents = 'none';

@@ -16,18 +16,13 @@ export const METADATA = {
   avisoReferencial:
     'Resultado cartográfico referencial. La aplicación normativa debe verificarse con los antecedentes específicos del proyecto.',
   mapaBase: {
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-    /** Nombres de calles, dibujados sobre las coberturas. */
-    urlEtiquetas:
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+    /** Estilo vectorial Esri «Light Gray Canvas Base»; se le quitan todos los textos. */
+    estiloVectorial:
+      'https://www.arcgis.com/sharing/rest/content/items/291da5eab3a0412593b66d384379f89f/resources/styles/root.json',
+    /** Respaldo raster si el estilo vectorial no carga. */
+    rasterRespaldo:
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     atribucion: 'Mapa base &copy; Esri — Esri, HERE, Garmin, &copy; OpenStreetMap',
-    /** Zoom máximo con teselas propias; más allá se amplían las del nivel 16. */
-    zoomNativoMax: 16,
-    /**
-     * Las etiquetas de Esri se ocultan desde el zoom 16, donde las reemplazan
-     * los nombres de calles de EJES_VIALES (capa «Nombres de calles»).
-     */
-    zoomMaxEtiquetas: 15,
   },
   /** Vista inicial mientras se carga la primera cobertura (centro de la comuna). */
   vistaInicial: { centro: [-33.4569, -70.6483] as [number, number], zoom: 14 },
