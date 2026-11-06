@@ -3,10 +3,11 @@ Preprocesamiento de datos para el visor «Condiciones territoriales DS 68».
 
 Lee los shapefiles originales (sin modificarlos), repara geometrías,
 reproyecta a EPSG:4326 y exporta GeoJSON livianos a public/data/.
+Convierte además el Excel de normas por zona a public/data/normas_zonas.json.
 
 Uso:
     python scripts/prepare_data.py
-    python scripts/prepare_data.py --origen "D:\\ruta\\a\\3. Coberturas DS68"
+    python scripts/prepare_data.py --origen "D:\\ruta\\a\\coberturas" --excel "D:\\ruta\\normas.xlsx"
 """
 
 from __future__ import annotations
@@ -15,11 +16,15 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import sys
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 
 import geopandas as gpd
+import numpy as np
+import openpyxl
 import pandas as pd
 import pyogrio
 import shapely
@@ -31,20 +36,56 @@ from shapely.validation import make_valid
 # ---------------------------------------------------------------------------
 
 APP_DIR = Path(__file__).resolve().parent.parent
-ORIGEN_POR_DEFECTO = APP_DIR.parent / "3. Coberturas DS68"
+CARPETA_ACTUALIZADA = APP_DIR.parent / "6. shp pre reg por zona"
+ORIGEN_POR_DEFECTO = CARPETA_ACTUALIZADA / "3. Coberturas DS68"
+# Si un archivo no está en la carpeta actualizada, se busca en la carpeta anterior.
+ORIGEN_RESPALDO = APP_DIR.parent / "3. Coberturas DS68"
+# Excel de normas de edificación por zona (se busca por patrón, ignorando archivos temporales «~$»).
+PATRON_EXCEL_NORMAS = "Normas edificacion PRCS*.xlsx"
 SALIDA = APP_DIR / "public" / "data"
 
 CRS_ESPERADO = 32719  # WGS 84 / UTM 19S
 CRS_SALIDA = 4326
 
-# Campos prediales: nombres físicos verificados en predios_dic2025.dbf.
-# Si cambian en una nueva versión de la cobertura, corregir aquí.
-CAMPO_ID_PREDIO = "COD_CAT"
-CAMPO_CUMPLE = "CUMPLE_1"
-CAMPO_20M = "20M_CONDB"
-CAMPO_VIAL = "VIAL_DS68"
-CAMPO_METRO = "METRO_600"
-CAMPOS_PREDIO = [CAMPO_CUMPLE, CAMPO_20M, CAMPO_VIAL, CAMPO_METRO]
+# Predios con las 7 condiciones (nombres físicos verificados en predios_zona_oct_2026.dbf).
+ARCHIVO_PREDIOS = "predios_zona_oct_2026.shp"
+CAMPO_ID_PREDIO = "COD_CAT"  # código catastral; no hay campo de rol ni manzana-predio
+CAMPO_ZONA = "ZONA"
+CAMPO_ZONA_RESPALDO = "ZONA_2"  # se usa cuando ZONA viene como «0»
+ZONAS_SIN_DATO = {"0", "0I"}
+CAMPOS_CONDICION = ["P1_CA_BASE", "P2_CON50", "P2_CON75", "P3_ALT25", "P3_ALT50", "P4_DEN28", "P4_DEN14"]
+DECIMALES_PREDIOS = 6  # ~10 cm; no se simplifican los límites prediales
+
+# Equivalencias entre ZONA (normalizada) y las columnas del Excel (normalizadas).
+# Además de estas, «Xi» se asigna a «SUBZONA XR» cuando existe en el Excel.
+EQUIVALENCIAS_ZONA = {
+    "B": ["BORIENTE", "BPONIENTE"],
+    "BI": ["BRO", "BRP"],
+    "D": ["DPONIENTE"],
+    "A3A": ["A3AB"],
+    "A3B": ["A3AB"],
+    "B7A": ["B7AB"],
+    "B7B": ["B7AB"],
+    "A7A": ["A7"],
+    "B2AI": ["B2R"],
+    "B2BI": ["B2R"],
+    "B15AI": ["B15R"],
+    "E10AI": ["E10R"],
+    "E10BI": ["E10R"],
+    "E10CI": ["E10R"],
+    "E10C1I": ["E10R"],
+}
+
+# Filas del Excel que usa el visor: clave -> (texto de la norma, subcategoría o None).
+# Se buscan por texto (sin tildes ni mayúsculas), no por número de fila.
+NORMAS_EXCEL = {
+    "constr_viv": ("coeficiente maximo de constructibilidad", "vivienda"),
+    "densidad": ("densidad", None),
+    "altura": ("altura maxima", None),
+    "constr_inc_viv": ("tructibilidad con incentivo", "vivienda"),
+    "dens_inc": ("densidad con incentivo", None),
+    "alt_inc": ("altura con incentivo", None),
+}
 
 # Estaciones: el estado viene en el campo «Name» (valores «EXSTENTE» y «PROYECTADA»).
 CAMPO_ESTADO_ESTACION = "Name"
@@ -66,8 +107,8 @@ CAPAS_AUXILIARES = {
     ),
     "LIMITE_COMUNA.shp": ("limite_comunal.geojson", ["NOM_COM"], True),
     "vialidad_comunal_20metros.shp": ("vialidad_20m.geojson", ["NOM_SIU", "CLASIF_VIA"], True),
+    "Manzanas.shp": ("manzanas.geojson", [], False),
 }
-ARCHIVO_PREDIOS = "predios_dic2025.shp"
 ARCHIVO_ESTACIONES = "ESTACIONES_DE_METRO_COMUNA_STGO_2.shp"
 ARCHIVO_AI_METRO = "AI_600m_Estaciones_DS68_Individual.shp"
 # Zonas de incentivo: se usa el primer archivo que exista. Sus límites siguen los
@@ -101,13 +142,29 @@ def sha256(ruta: Path) -> str:
     return h.hexdigest()
 
 
-def huellas_fuente(origen: Path) -> dict[str, str]:
+def huellas_fuente(carpetas: list[Path]) -> dict[str, str]:
     """Huella SHA-256 de cada componente de shapefile, para verificar que no cambien."""
     return {
-        p.name: sha256(p)
-        for p in sorted(origen.iterdir())
+        f"{c.parent.name}/{c.name}/{p.name}": sha256(p)
+        for c in carpetas
+        for p in sorted(c.iterdir())
         if p.is_file() and p.suffix.lower() in COMPONENTES
     }
+
+
+def sin_tildes(texto: str) -> str:
+    return "".join(ch for ch in unicodedata.normalize("NFD", texto) if unicodedata.category(ch) != "Mn")
+
+
+def normalizar_zona(texto) -> str | None:
+    """«SUBZONA A5R» -> «A5R»; «ZCH B7a_b» -> «B7AB»; «D3i» -> «D3I»."""
+    if texto is None or (isinstance(texto, float) and math.isnan(texto)):
+        return None
+    s = str(texto).strip().upper()
+    if not s:
+        return None
+    s = re.sub(r"^(ZONA|SUBZONA|ZCH|SE)\s+", "", s)
+    return re.sub(r"[\s_\-]", "", s)
 
 
 def normalizar(serie: pd.Series) -> pd.Series:
@@ -205,65 +262,179 @@ def simplificar(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 # ---------------------------------------------------------------------------
 
 
-def procesar_predios(origen: Path, informe: dict) -> list[dict]:
+def _texto_celda(v) -> str | None:
+    """Texto original de una celda, con decimales chilenos y espacios repetidos colapsados."""
+    if v is None:
+        return None
+    if isinstance(v, float):
+        v = f"{v:g}".replace(".", ",")
+    s = re.sub(r"\s+", " ", str(v)).strip()
+    return s or None
+
+
+def _valor_numerico(texto: str | None) -> float | None:
+    """Primer número del texto, solo si el texto empieza con un número (coma decimal -> punto)."""
+    if not texto:
+        return None
+    m = re.match(r"^(\d+(?:[.,]\d+)?)", texto)
+    return float(m.group(1).replace(",", ".")) if m else None
+
+
+def _leer_hoja_normas(ws) -> dict[str, dict]:
+    """Hoja transpuesta: cada columna (desde la C) es una zona; cada fila, una norma."""
+    combinadas = {}
+    for rango in ws.merged_cells.ranges:
+        v = ws.cell(rango.min_row, rango.min_col).value
+        for r in range(rango.min_row, rango.max_row + 1):
+            for c in range(rango.min_col, rango.max_col + 1):
+                combinadas[(r, c)] = v
+
+    def celda(r, c):
+        return combinadas.get((r, c), ws.cell(r, c).value)
+
+    # Ubicar filas por texto: la norma (col. A) se arrastra a sus filas de continuación.
+    filas = {}
+    norma_actual = ""
+    for r in range(2, ws.max_row + 1):
+        a = celda(r, 1)
+        if a:
+            norma_actual = sin_tildes(re.sub(r"\s+", " ", str(a))).lower().strip()
+        sub = sin_tildes(str(celda(r, 2) or "")).lower().strip()
+        for clave, (texto, subcat) in NORMAS_EXCEL.items():
+            if clave in filas:
+                continue
+            coincide = norma_actual.startswith(texto) if clave in ("densidad",) else texto in norma_actual
+            if clave == "densidad" and "incentivo" in norma_actual:
+                coincide = False
+            if coincide and (subcat is None or sub.startswith(subcat)):
+                filas[clave] = r
+
+    faltan = [k for k in NORMAS_EXCEL if k not in filas]
+    if faltan:
+        raise ErrorCampos(f"Hoja «{ws.title}»: no se encontraron las filas {faltan}.")
+
+    zonas = {}
+    for c in range(3, ws.max_column + 1):
+        nombre = _texto_celda(ws.cell(1, c).value)
+        clave = normalizar_zona(nombre)
+        if not clave:
+            continue
+        datos = {"nombre": nombre}
+        for k, r in filas.items():
+            texto = _texto_celda(celda(r, c))
+            datos[k] = {"texto": texto, "valor": _valor_numerico(texto)}
+        zonas[clave] = datos
+    return zonas
+
+
+def procesar_normas(excel: Path, informe: dict) -> tuple[dict, list[dict]]:
+    """Convierte el Excel de normas a normas_zonas.json (hoja «Zonas» + zonas solo presentes en detalle)."""
+    print(f"\n[normas por zona] {excel.name}")
+    wb = openpyxl.load_workbook(excel, data_only=True)
+    zonas = _leer_hoja_normas(wb["Zonas"])
+    agregadas = {}
+    for ws in wb.worksheets:
+        if ws.title == "Zonas":
+            continue
+        for clave, datos in _leer_hoja_normas(ws).items():
+            if clave not in zonas:
+                zonas[clave] = datos
+                agregadas[clave] = ws.title
+    destino = SALIDA / "normas_zonas.json"
+    contenido = {
+        "fuente": f"{excel.name}, hoja «Zonas»" + (f" (más {', '.join(sorted(set(agregadas.values())))} para {', '.join(agregadas)})" if agregadas else ""),
+        "nota": "texto = valor original del Excel; valor = primer número, solo si el texto empieza con un número.",
+        "zonas": zonas,
+    }
+    destino.write_text(json.dumps(contenido, ensure_ascii=False, indent=1), encoding="utf-8")
+    tam = destino.stat().st_size
+    print(f"  -> normas_zonas.json: {len(zonas)} zonas; {tam / 1024:,.0f} KB".replace(",", "."))
+    informe["normas"] = {"excel": excel.name, "zonas": len(zonas), "zonas_desde_hojas_de_detalle": agregadas}
+    return zonas, [{"archivo": "normas_zonas.json", "entidades": len(zonas), "bytes": int(tam)}]
+
+
+def claves_normas(zona: str | None, zonas_excel: dict) -> list[str]:
+    """Columnas del Excel que corresponden a una ZONA del shapefile."""
+    k = normalizar_zona(zona)
+    if not k:
+        return []
+    if k in zonas_excel:
+        return [k]
+    if k in EQUIVALENCIAS_ZONA:
+        return [c for c in EQUIVALENCIAS_ZONA[k] if c in zonas_excel]
+    if k.endswith("I") and f"{k[:-1]}R" in zonas_excel:
+        return [f"{k[:-1]}R"]
+    return []
+
+
+def _redondear(geoms: np.ndarray, decimales: int) -> np.ndarray:
+    return shapely.transform(geoms, lambda xy: np.round(xy, decimales))
+
+
+def procesar_predios(origen: Path, informe: dict, zonas_excel: dict) -> list[dict]:
     ruta = origen / ARCHIVO_PREDIOS
     print(f"\n[predios] {ruta.name}")
     gdf, rep = leer(ruta)
 
-    requeridos = [CAMPO_ID_PREDIO, *CAMPOS_PREDIO]
+    requeridos = [CAMPO_ID_PREDIO, CAMPO_ZONA, CAMPO_ZONA_RESPALDO, *CAMPOS_CONDICION]
     faltan = [c for c in requeridos if c not in gdf.columns]
     if faltan:
         raise ErrorCampos(
             f"No se encontraron los campos {faltan} en {ruta.name}.\n"
             f"Campos encontrados: {rep['campos']}\n"
-            "Corrija las constantes CAMPO_* al inicio de scripts/prepare_data.py "
-            "con los nombres físicos reales del shapefile."
+            "Corrija las constantes CAMPO_* / CAMPOS_CONDICION al inicio de scripts/prepare_data.py."
         )
 
-    # Identificador: COD_CAT viene como número decimal; se publica como texto entero.
-    ident = gdf[CAMPO_ID_PREDIO]
-    ident = ident.where(ident.isna(), ident.round().astype("Int64").astype(str))
-    datos = gpd.GeoDataFrame(
-        {
-            "id_predio": ident,
-            **{c: normalizar(gdf[c]) for c in CAMPOS_PREDIO},
-        },
-        geometry=gdf.geometry,
-        crs=gdf.crs,
-    )
+    # Zona mostrada: ZONA, o ZONA_2 cuando ZONA viene como «0».
+    zona = gdf[CAMPO_ZONA].astype("string").str.strip()
+    usar_respaldo = zona.isna() | zona.str.upper().isin(ZONAS_SIN_DATO)
+    zona = zona.where(~usar_respaldo, gdf[CAMPO_ZONA_RESPALDO].astype("string").str.strip())
+    zona = zona.where(zona.notna() & (zona != ""), None)
+    claves = zona.map(lambda z: "|".join(claves_normas(z, zonas_excel)) if isinstance(z, str) else "")
 
-    base = es_si(gdf[CAMPO_CUMPLE]) & es_si(gdf[CAMPO_20M])
-    vial = base & es_si(gdf[CAMPO_VIAL])
-    metro = base & es_si(gdf[CAMPO_METRO])
-
-    rep["valores_unicos"] = {
-        c: {str(k): int(v) for k, v in normalizar(gdf[c]).value_counts(dropna=False).items()}
-        for c in CAMPOS_PREDIO
+    sin_cruce = zona[zona.notna() & (claves == "")].value_counts()
+    rep["zona"] = {
+        "reemplazadas_por_ZONA_2": int((usar_respaldo & zona.notna()).sum()),
+        "sin_zona": int(zona.isna().sum()),
+        "sin_cruce_con_excel": {str(k): int(v) for k, v in sin_cruce.items()},
     }
+
+    condiciones = {c: es_si(gdf[c]) for c in CAMPOS_CONDICION}
+    rep["condiciones"] = {c: int(m.sum()) for c, m in condiciones.items()}
+    for c, n in rep["condiciones"].items():
+        if n == 0:
+            raise ErrorCampos(f"La condición {c} quedó sin predios. Revise los valores del campo.")
+
+    ident = gdf[CAMPO_ID_PREDIO].round().astype("Int64").astype("string")
     rep["identificador"] = {
         "campo": CAMPO_ID_PREDIO,
         "nulos": int(ident.isna().sum()),
-        "duplicados": int(ident.dropna().duplicated().sum()),
-    }
-    rep["vistas"] = {
-        "condicion_base": int(base.sum()),
-        "condicion_vial": int(vial.sum()),
-        "condicion_metro": int(metro.sum()),
+        "codigos_repetidos": int(ident.dropna().duplicated().sum()),
+        "nota": "Los códigos repetidos corresponden a predios divididos por límites de zona.",
     }
     informe["predios"] = rep
 
-    for nombre, mascara in (("condicion_base", base), ("condicion_vial", vial), ("condicion_metro", metro)):
-        if mascara.sum() == 0:
-            raise ErrorCampos(
-                f"La vista «{nombre}» quedó vacía. Revise los valores de {CAMPOS_PREDIO}: "
-                f"{rep['valores_unicos']}"
-            )
+    # GeoJSON compacto: c = código catastral, z = zona, k = columnas del Excel,
+    # s = superficie del trozo en m², cond = condiciones que cumple.
+    geoms = _redondear(gdf.to_crs(CRS_SALIDA).geometry.values, DECIMALES_PREDIOS)
+    area = gdf.geometry.area.round(1)
+    features = []
+    for i, geom in enumerate(geoms):
+        props = {
+            "c": None if pd.isna(ident.iat[i]) else ident.iat[i],
+            "z": None if pd.isna(zona.iat[i]) else zona.iat[i],
+            "k": claves.iat[i],
+            "s": float(area.iat[i]),
+            "cond": [c for c in CAMPOS_CONDICION if condiciones[c].iat[i]],
+        }
+        features.append({"type": "Feature", "properties": props, "geometry": shapely.geometry.mapping(geom)})
 
-    return [
-        exportar(datos[base], "predios_condicion_base.geojson"),
-        exportar(datos[vial], "predios_condicion_vial.geojson"),
-        exportar(datos[metro], "predios_condicion_metro.geojson"),
-    ]
+    destino = SALIDA / "predios.geojson"
+    with destino.open("w", encoding="utf-8") as f:
+        json.dump({"type": "FeatureCollection", "features": features}, f, ensure_ascii=False, separators=(",", ":"))
+    tam = destino.stat().st_size
+    print(f"  -> predios.geojson: {len(features):,} entidades; {tam / 1e6:,.1f} MB".replace(",", "."))
+    return [{"archivo": "predios.geojson", "entidades": len(features), "bytes": int(tam)}]
 
 
 def procesar_estaciones(origen: Path, informe: dict) -> list[dict]:
@@ -398,30 +569,51 @@ def procesar_incentivo(origen: Path, archivo: str, informe: dict) -> list[dict]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--origen", type=Path, default=ORIGEN_POR_DEFECTO,
-                        help="Carpeta con los shapefiles originales.")
+                        help="Carpeta con los shapefiles actualizados.")
+    parser.add_argument("--respaldo", type=Path, default=ORIGEN_RESPALDO,
+                        help="Carpeta donde buscar los shapefiles que falten en --origen.")
+    parser.add_argument("--excel", type=Path, default=None,
+                        help="Excel de normas por zona (por defecto se busca junto a la carpeta de origen).")
     args = parser.parse_args()
     origen: Path = args.origen.resolve()
+    carpetas = [c for c in (origen, args.respaldo.resolve()) if c.is_dir()]
 
     if not origen.is_dir():
         print(f"ERROR: no existe la carpeta de origen: {origen}")
         return 1
+    excel = args.excel or next(
+        (p for p in sorted(origen.parent.glob(PATRON_EXCEL_NORMAS)) if not p.name.startswith("~$")), None)
+    if excel is None or not excel.exists():
+        print(f"ERROR: no se encontró el Excel de normas ({PATRON_EXCEL_NORMAS}) en {origen.parent}")
+        return 1
 
     SALIDA.mkdir(parents=True, exist_ok=True)
-    print(f"Origen: {origen}\nSalida: {SALIDA}")
+    print(f"Origen: {origen}\nRespaldo: {carpetas[1:] or '-'}\nExcel: {excel}\nSalida: {SALIDA}")
 
-    huellas_antes = huellas_fuente(origen)
+    def ubicar(archivo: str) -> Path | None:
+        return next((c for c in carpetas if (c / archivo).exists()), None)
+
+    huellas_antes = huellas_fuente(carpetas)
     informe: dict = {
         "generado": datetime.now().isoformat(timespec="seconds"),
-        "origen": str(origen),
+        "origen": [c.name if c == origen else f"{c.name} (respaldo)" for c in carpetas],
         "crs_salida": f"EPSG:{CRS_SALIDA}",
         "capas": {},
         "archivos_faltantes": [],
         "archivos_generados": [],
+        "carpeta_por_archivo": {},
     }
 
-    incentivo = next((a for a in ARCHIVOS_INCENTIVO if (origen / a).exists()), ARCHIVOS_INCENTIVO[0])
+    try:
+        zonas_excel, generados = procesar_normas(excel, informe)
+        informe["archivos_generados"].extend(generados)
+    except ErrorCampos as e:
+        print(f"\nERROR EN EL EXCEL:\n{e}")
+        return 2
+
+    incentivo = next((a for a in ARCHIVOS_INCENTIVO if ubicar(a)), ARCHIVOS_INCENTIVO[0])
     tareas = [
-        (ARCHIVO_PREDIOS, procesar_predios, True),
+        (ARCHIVO_PREDIOS, lambda o, i: procesar_predios(o, i, zonas_excel), True),
         (ARCHIVO_ESTACIONES, procesar_estaciones, False),
         (ARCHIVO_AI_METRO, procesar_influencia_metro, False),
         *[(a, lambda o, i, a=a: procesar_auxiliar(o, a, i), False) for a in CAPAS_AUXILIARES],
@@ -431,19 +623,21 @@ def main() -> int:
 
     try:
         for archivo, funcion, obligatorio in tareas:
-            if not (origen / archivo).exists():
+            carpeta = ubicar(archivo)
+            if carpeta is None:
                 if obligatorio:
                     print(f"ERROR: falta el archivo obligatorio {archivo}.")
                     return 1
                 print(f"\n  ! No se encontró {archivo}: la capa se omitirá.")
                 informe["archivos_faltantes"].append(archivo)
                 continue
-            informe["archivos_generados"].extend(funcion(origen, informe))
+            informe["carpeta_por_archivo"][archivo] = "actualizada" if carpeta == origen else "respaldo"
+            informe["archivos_generados"].extend(funcion(carpeta, informe))
     except ErrorCampos as e:
         print(f"\nERROR DE CAMPOS:\n{e}")
         return 2
 
-    huellas_despues = huellas_fuente(origen)
+    huellas_despues = huellas_fuente(carpetas)
     cambiados = [n for n in huellas_antes if huellas_antes[n] != huellas_despues.get(n)]
     informe["fuentes_intactas"] = not cambiados and huellas_antes.keys() == huellas_despues.keys()
     informe["huellas_sha256_fuente"] = huellas_antes
@@ -460,7 +654,8 @@ def main() -> int:
     destino = SALIDA / "data_report.json"
     destino.write_text(json.dumps(informe, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\nInforme: {destino}")
-    print("Vistas prediales:", informe["predios"]["vistas"])
+    print("Predios por condición:", informe["predios"]["condiciones"])
+    print("Zonas sin cruce con el Excel:", informe["predios"]["zona"]["sin_cruce_con_excel"] or "ninguna")
     print("Fuentes intactas:", informe["fuentes_intactas"])
     return 0
 

@@ -1,29 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Feature } from 'geojson';
-import { CONDITIONS, REFERENCE_LAYERS, fileName, type ConditionId } from './config/layers';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { REFERENCE_LAYERS, fileName } from './config/layers';
 import { METADATA } from './config/metadata';
-import { formatNumber, loadAvailableFiles, loadGeoJSON } from './lib/data';
-import { intersectsAny } from './lib/geometry';
+import { CONDICIONES, condicionPorCampo } from './config/condiciones';
+import { loadAvailableFiles } from './lib/data';
+import { loadNormas, type NormasData } from './lib/normas';
+import { NO_EXPORTAR, descargarJpg } from './lib/exportImage';
 import MapView from './components/MapView';
-import NormativeBenefitsCard from './components/NormativeBenefitsCard';
+import ConditionPanel from './components/ConditionPanel';
+import MapSummary from './components/MapSummary';
+import MapLegend from './components/MapLegend';
 import LayerPanel from './components/LayerPanel';
-import Legend from './components/Legend';
 import NormativePanel from './components/NormativePanel';
 import SourcesPanel from './components/SourcesPanel';
 
 type Panel = 'normativa' | 'fuentes' | null;
 
-/** Tarjeta de efectos normativos abierta (solo una a la vez). */
-interface OpenCard {
-  condition: ConditionId;
-  featureProperties?: Record<string, unknown>;
-  isInHistoricZone?: boolean;
-}
-
-const ZCH_LAYER = REFERENCE_LAYERS.find((l) => l.id === 'zch');
+const hoy = () => new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
 
 export default function App() {
-  const [conditionId, setConditionId] = useState<ConditionId>('base');
+  const [campo, setCampo] = useState(CONDICIONES[0].campo);
   const [activeRefs, setActiveRefs] = useState(
     () => new Set(REFERENCE_LAYERS.filter((l) => l.visibleByDefault).map((l) => l.id)),
   );
@@ -32,13 +27,15 @@ export default function App() {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const [count, setCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
-  const [card, setCard] = useState<OpenCard | null>(null);
+  const [normas, setNormas] = useState<NormasData | null>(null);
+  const mapWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadAvailableFiles().then((files) => {
       if (files) {
-        for (const layer of [...CONDITIONS, ...REFERENCE_LAYERS]) {
+        for (const layer of REFERENCE_LAYERS) {
           if (!files.has(fileName(layer.url))) {
             console.warn(
               `[Visor DS 68] Capa no disponible: «${layer.label}». Falta public/data/${fileName(layer.url)} ` +
@@ -49,6 +46,9 @@ export default function App() {
       }
       setAvailableFiles(files);
     });
+    loadNormas()
+      .then(setNormas)
+      .catch((err) => console.warn(`[Visor DS 68] No se pudieron cargar las normas por zona: ${String(err)}`));
   }, []);
 
   const isAvailable = useCallback(
@@ -56,10 +56,9 @@ export default function App() {
     [availableFiles, failed],
   );
 
-  const conditions = useMemo(() => CONDITIONS.filter((c) => isAvailable(c.id, c.url)), [isAvailable]);
   const references = useMemo(() => REFERENCE_LAYERS.filter((l) => isAvailable(l.id, l.url)), [isAvailable]);
   const activeReferences = useMemo(() => references.filter((l) => activeRefs.has(l.id)), [references, activeRefs]);
-  const condition = CONDITIONS.find((c) => c.id === conditionId)!;
+  const condicion = useMemo(() => condicionPorCampo(campo), [campo]);
 
   const toggleRef = (id: string) =>
     setActiveRefs((prev) => {
@@ -71,27 +70,19 @@ export default function App() {
 
   const markUnavailable = useCallback((id: string) => setFailed((prev) => new Set(prev).add(id)), []);
   const closePanel = useCallback(() => setPanel(null), []);
-  const closeCard = useCallback(() => setCard(null), []);
 
-  const selectCondition = (id: ConditionId) => {
-    setConditionId(id);
-    setCard({ condition: id });
-  };
-
-  // Desde el popup predial: tarjeta de la condición activa, con los campos del predio
-  // y el aviso de Zona de Conservación Histórica si el predio la intersecta.
-  const showEffects = useCallback(async (feature: Feature, condition: ConditionId) => {
-    const featureProperties = (feature.properties ?? {}) as Record<string, unknown>;
-    let isInHistoricZone = false;
-    if (ZCH_LAYER) {
-      try {
-        isInHistoricZone = intersectsAny(feature.geometry, await loadGeoJSON(ZCH_LAYER.url));
-      } catch (err) {
-        console.warn(`[Visor DS 68] No se pudo evaluar la Zona de Conservación Histórica: ${String(err)}`);
-      }
+  const exportar = async () => {
+    if (!mapWrapRef.current || exporting) return;
+    setExporting(true);
+    try {
+      await descargarJpg(mapWrapRef.current, `DS68_${condicion.campo}.jpg`);
+    } catch (err) {
+      console.error('[Visor DS 68] No se pudo exportar la imagen:', err);
+      alert('No se pudo generar la imagen. Intente nuevamente cuando el mapa termine de cargar.');
+    } finally {
+      setExporting(false);
     }
-    setCard({ condition, featureProperties, isInHistoricZone });
-  }, []);
+  };
 
   return (
     <div className="app">
@@ -103,70 +94,49 @@ export default function App() {
         <nav className="topbar-actions">
           <button className="link-button" onClick={() => setPanel('normativa')}>Referencia normativa</button>
           <button className="link-button" onClick={() => setPanel('fuentes')}>Fuentes</button>
+          <button className="link-button is-primary" onClick={exportar} disabled={exporting || loading}>
+            {exporting ? 'Generando imagen…' : 'Descargar imagen (JPG)'}
+          </button>
         </nav>
       </header>
 
       <div className="main">
         <aside className="sidebar">
-          <section className="block">
-            <div className="selector" role="radiogroup" aria-label="Condición predial">
-              {CONDITIONS.map((c, i) => {
-                const enabled = conditions.includes(c);
-                return (
-                  <button
-                    key={c.id}
-                    role="radio"
-                    aria-checked={c.id === conditionId}
-                    className={`selector-option${c.id === conditionId ? ' is-active' : ''}`}
-                    style={{ ['--accent' as string]: c.style.color }}
-                    disabled={!enabled}
-                    title={enabled ? c.label : 'Cobertura no disponible'}
-                    onClick={() => selectCondition(c.id)}
-                  >
-                    <span className="selector-num">{i + 1}</span>
-                    {c.buttonLabel}
-                  </button>
-                );
-              })}
-            </div>
-            {card ? (
-              <NormativeBenefitsCard
-                condition={card.condition}
-                featureProperties={card.featureProperties}
-                isInHistoricZone={card.isInHistoricZone}
-                onClose={closeCard}
-              />
-            ) : (
-              <p className="explanation">{condition.description}</p>
-            )}
-            <p className="counter">
-              Predios mostrados: <strong>{count == null ? '…' : formatNumber(count)}</strong>
-            </p>
-          </section>
-
+          <ConditionPanel activa={condicion} onSelect={setCampo} />
           {availableFiles !== undefined && (
             <LayerPanel layers={references} active={activeRefs} onToggle={toggleRef} />
           )}
-          <Legend condition={condition} references={activeReferences} />
           <p className="disclaimer">{METADATA.avisoReferencial}</p>
         </aside>
 
-        <div className="map-wrap">
+        <div className="map-wrap" ref={mapWrapRef}>
           {availableFiles !== undefined && (
             <MapView
-              condition={condition}
+              condicion={condicion}
               references={activeReferences}
+              normas={normas}
               onCount={setCount}
               onLoadingChange={setLoading}
               onLayerUnavailable={markUnavailable}
-              onShowEffects={showEffects}
             />
           )}
-          {(loading || availableFiles === undefined) && <div className="loading">Cargando…</div>}
+          <MapSummary condicion={condicion} predios={count} />
+          <MapLegend condicion={condicion} references={activeReferences} />
+          <div className="north-arrow" aria-label="Norte">
+            <svg viewBox="0 0 24 36" aria-hidden="true">
+              <path d="M12 2 L20 26 L12 21 L4 26 Z" fill="#33383d" />
+              <path d="M12 2 L12 21 L4 26 Z" fill="#8a9097" />
+            </svg>
+            <span>N</span>
+          </div>
+          <div className="export-footer">
+            {hoy()} · Fuente: {METADATA.fuenteImagen}
+          </div>
+          {(loading || availableFiles === undefined) && <div className={`loading ${NO_EXPORTAR}`}>Cargando…</div>}
         </div>
       </div>
 
-      {panel === 'normativa' && <NormativePanel current={conditionId} onClose={closePanel} />}
+      {panel === 'normativa' && <NormativePanel activa={condicion} onClose={closePanel} />}
       {panel === 'fuentes' && <SourcesPanel onClose={closePanel} />}
     </div>
   );

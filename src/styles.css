@@ -8,7 +8,7 @@
   --soft: #f5f6f7;
   --focus: #2f5d8a;
   --warning: #7a5a12;
-  --sidebar-w: 300px;
+  --sidebar-w: 320px;
   --header-h: 52px;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   font-size: 14px;
@@ -45,7 +45,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   padding: 5px 10px;
   font-size: 13px;
 }
-.link-button:hover { background: var(--soft); }
+.link-button:hover:not(:disabled) { background: var(--soft); }
+.link-button.is-primary { background: #33383d; border-color: #33383d; color: #fff; }
+.link-button.is-primary:hover:not(:disabled) { background: #1f2327; }
+.link-button:disabled { opacity: 0.6; cursor: progress; }
 
 /* Cuerpo */
 .main { flex: 1; display: flex; min-height: 0; }
@@ -56,7 +59,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   border-right: 1px solid var(--line);
   padding: 12px 14px 16px;
 }
-.map-wrap { position: relative; flex: 1; min-width: 0; }
+.map-wrap { position: relative; flex: 1; min-width: 0; overflow: hidden; background: #f2f2f0; }
 .map { position: absolute; inset: 0; background: #f2f2f0; }
 
 .block { padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
@@ -77,110 +80,149 @@ button { font: inherit; color: inherit; cursor: pointer; }
   border: none;
   padding: 0;
 }
-.chevron { font-size: 16px; line-height: 1; }
+.chevron { font-size: 16px; line-height: 1; margin-left: auto; }
 
-/* Selector de condición */
-.selector { display: flex; flex-direction: column; gap: 4px; }
-.selector-option {
+/* Grupos de condiciones (acordeón) */
+.groups { display: grid; gap: 10px; margin-bottom: 14px; }
+.group-box {
+  background: var(--group-bg);
+  border: 1px solid var(--group-border);
+  border-radius: 6px;
+  padding: 10px 10px 8px;
+}
+.group-title { font-size: 14px; margin: 0 0 4px; color: var(--accent); }
+.group-intro { font-size: 12.5px; line-height: 1.45; margin: 0 0 8px; }
+.plano-list, .variant-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.plano-button {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
   text-align: left;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--line);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--group-border);
+  border-left: 3px solid var(--group-border);
   border-radius: 4px;
-  padding: 7px 10px;
+  padding: 7px 9px;
+  font-size: 13px;
 }
-.selector-option:hover:not(:disabled) { background: var(--soft); }
-.selector-option.is-active { border-left-color: var(--accent); background: var(--soft); font-weight: 600; }
-.selector-option:disabled { color: var(--muted); cursor: not-allowed; }
-.selector-num {
+.plano-button:hover { background: #fff; }
+.plano-button.has-active { border-left-color: var(--accent); }
+.plano-button.is-active { background: #fff; font-weight: 600; box-shadow: 0 0 0 1px var(--accent) inset; }
+.plano-num {
   display: inline-grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
+  flex: none;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   font-size: 11px;
-  border: 1px solid currentColor;
-  color: var(--muted);
-}
-.is-active .selector-num { color: var(--accent); }
-
-.explanation { font-size: 13px; line-height: 1.45; color: var(--text); margin: 10px 0 8px; }
-.counter { margin: 0; font-size: 13px; }
-
-/* Tarjeta de efectos normativos potenciales */
-.benefits-card {
-  margin-top: 10px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--accent);
-  border-radius: 4px;
-  padding: 10px 12px 10px;
-  font-size: 12.5px;
-  line-height: 1.45;
-  scroll-margin: 8px;
-}
-.benefits-card p { margin: 0 0 6px; }
-.benefits-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.benefits-card-header h3 { font-size: 13px; margin: 0 0 6px; }
-.benefits-card-kicker { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 2px !important; }
-.benefits-card-status { font-size: 12px; font-weight: 600; color: var(--accent); }
-.benefits-card-status.is-negative { color: var(--warning); }
-.benefits-block { margin-bottom: 8px; }
-.benefits-block h4, .benefits-fundament h4 {
-  font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-  margin: 0 0 4px;
+  color: #fff;
+  background: var(--accent);
 }
-.benefits-intro, .benefits-muted { color: var(--muted); font-size: 12px; }
-.benefits-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
-.benefits-list li { display: grid; gap: 1px; }
-.benefits-list strong { font-size: 12.5px; }
-.benefits-alert, .benefits-zch {
-  background: var(--soft);
+.plano-art { color: var(--muted); font-weight: normal; }
+.variant-list { grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px 0 4px 28px; }
+.variant-button {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--group-border);
   border-radius: 4px;
   padding: 6px 8px;
-  margin-bottom: 8px;
-  color: var(--warning);
+  font-size: 13px;
 }
-.benefits-alert p, .benefits-zch p { margin: 2px 0 0; }
-.benefits-zch { color: var(--text); margin-top: 8px; }
-.benefits-ref { color: var(--muted); font-style: italic; }
-.benefits-toggle {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--focus);
-  text-decoration: underline;
-  font-size: 12.5px;
-}
-.benefits-fundament { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
-.benefits-fundament section { margin-bottom: 8px; }
-.benefits-fundament dl { margin: 0 0 6px; }
-.benefits-fundament dt { font-weight: 600; }
-.benefits-fundament dd { margin: 0 0 4px; }
-.benefits-refs, .benefits-height ul { margin: 0 0 6px; padding-left: 16px; }
-.benefits-height h5 { font-size: 12.5px; margin: 0 0 4px; }
-.benefits-notice { font-size: 11px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px; margin: 8px 0 0 !important; }
+.variant-button:hover { border-color: var(--accent); }
+.variant-button.is-active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 
-/* Capas y leyenda */
-.layer-list, .legend { list-style: none; margin: 0; padding: 0; }
+/* Capas de referencia */
+.layer-list { list-style: none; margin: 0; padding: 0; }
 .toggle { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; font-size: 13px; }
 .toggle input { margin: 0; }
 .swatch { width: 18px; height: 14px; flex: none; }
-.legend li { display: flex; align-items: center; gap: 8px; padding: 2px 0; font-size: 13px; }
-.legend-main { font-weight: 600; }
 .disclaimer { font-size: 11.5px; color: var(--muted); line-height: 1.4; margin: 0; }
+
+/* Recuadro de resumen sobre el mapa */
+.map-summary {
+  position: absolute;
+  z-index: 800;
+  top: 10px;
+  left: 56px;
+  right: 56px;
+  max-width: 620px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--accent);
+  border-radius: 6px;
+  padding: 10px 14px 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+.summary-group { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin: 0; font-weight: 600; }
+.summary-title { font-size: 16px; margin: 2px 0 6px; }
+.summary-figures { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.summary-percent { font-size: 40px; line-height: 1; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; }
+.summary-count { font-size: 13px; line-height: 1.35; }
+.summary-count strong { font-size: 18px; }
+.summary-predios { color: var(--muted); }
+.summary-text { font-size: 13px; line-height: 1.45; margin: 0; }
+
+/* Leyenda dentro del mapa */
+.map-legend {
+  position: absolute;
+  z-index: 800;
+  left: 10px;
+  bottom: 22px;
+  max-width: 300px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+}
+.map-legend h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 0 0 4px;
+}
+.map-legend ul { list-style: none; margin: 0; padding: 0; }
+.map-legend li { display: flex; align-items: center; gap: 8px; padding: 2px 0; font-size: 12.5px; }
+.legend-main { font-weight: 600; }
+
+/* Norte y pie de la imagen exportada */
+.north-arrow {
+  position: absolute;
+  z-index: 800;
+  top: 10px;
+  right: 12px;
+  display: grid;
+  justify-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+  padding: 4px 6px 2px;
+  pointer-events: none;
+}
+.north-arrow svg { width: 16px; height: 24px; }
+.north-arrow span { font-size: 11px; font-weight: 700; line-height: 1.1; }
+.export-footer {
+  display: none;
+  position: absolute;
+  z-index: 800;
+  right: 10px;
+  bottom: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+.is-exporting .export-footer { display: block; }
 
 /* Indicador de carga */
 .loading {
   position: absolute;
-  top: 10px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
@@ -222,25 +264,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .icon-button { background: none; border: none; font-size: 22px; line-height: 1; padding: 0 4px; color: var(--muted); }
 .dialog-body { overflow-y: auto; padding: 12px 16px 24px; font-size: 13.5px; line-height: 1.5; }
 .dialog-body p { margin: 0 0 8px; }
-.dialog-body ul { margin: 0 0 8px; padding-left: 18px; }
-.dialog-body li { margin-bottom: 4px; }
-.norm-section { padding: 10px 0 6px; border-bottom: 1px solid var(--line); }
-.norm-section:last-child { border-bottom: none; }
-.norm-section h3 { font-size: 14px; margin: 0 0 6px; }
-.norm-section h4 {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-  margin: 10px 0 4px;
-}
-.norm-section.is-current { border-left: 3px solid var(--focus); padding-left: 10px; margin-left: -13px; }
-.ref { color: var(--muted); font-style: italic; }
-.warning { color: var(--warning); font-size: 12.5px; }
+.norm-group { margin-bottom: 14px; }
+.norm-group h3 { font-size: 15px; margin: 0 0 6px; color: var(--accent); }
+.norm-section { padding: 8px 0 4px; border-top: 1px solid var(--line); }
+.norm-section h4 { font-size: 13.5px; margin: 0 0 4px; }
+.norm-section.is-current { border-left: 3px solid var(--accent); padding-left: 10px; margin-left: -13px; }
 .meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 12px 0; }
 .meta dt { color: var(--muted); }
 .meta dd { margin: 0; }
+.warning { color: var(--warning); font-size: 12.5px; }
 
 /* Nombres de calles (solo texto, sin símbolo) */
 .street-label { background: none; border: none; }
@@ -255,25 +287,33 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 
 /* Popup predial */
-.popup table { border-collapse: collapse; font-size: 12.5px; }
-.popup th { text-align: left; font-weight: normal; color: var(--muted); padding: 2px 10px 2px 0; }
-.popup td { font-weight: 600; padding: 2px 0; }
-.popup-button {
-  margin-top: 8px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 4px 10px;
-  font-size: 12px;
+.popup { font-size: 12.5px; line-height: 1.4; }
+.popup h4 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin: 10px 0 3px;
 }
-.popup-button:hover { background: var(--soft); }
-.popup-note { font-size: 11px; color: var(--muted); margin: 8px 0 0; line-height: 1.35; }
+.popup p { margin: 0 0 4px; }
+.popup-table { border-collapse: collapse; width: 100%; }
+.popup-table th { text-align: left; font-weight: normal; color: var(--muted); padding: 2px 8px 2px 0; vertical-align: top; }
+.popup-table td { font-weight: 600; padding: 2px 0; }
+.popup-table tr.is-strong td { color: var(--accent); }
+.popup-id td { font-size: 13px; }
+.popup-muted { color: var(--muted); font-size: 12px; }
+.popup-note { font-size: 11px; color: var(--muted); margin: 8px 0 0 !important; line-height: 1.35; }
 .leaflet-container { font-family: inherit; }
 
 /* Pantallas angostas: el mapa arriba y el panel debajo, con desplazamiento propio. */
 @media (max-width: 720px) {
   .topbar { height: auto; min-height: var(--header-h); padding: 8px 16px; flex-wrap: wrap; }
   .main { flex-direction: column; }
-  .map-wrap { flex: 1 1 58%; order: -1; }
-  .sidebar { width: 100%; flex: 0 1 42%; border-right: none; border-top: 1px solid var(--line); }
+  .map-wrap { flex: 1 1 62%; order: -1; }
+  .sidebar { width: 100%; flex: 0 1 38%; border-right: none; border-top: 1px solid var(--line); }
+  .map-summary { left: 50px; right: 46px; padding: 6px 10px; }
+  .summary-percent { font-size: 28px; }
+  .summary-title { font-size: 14px; }
+  .summary-text { display: none; }
+  .map-legend { max-width: 60%; font-size: 11px; }
 }

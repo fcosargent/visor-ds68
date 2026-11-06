@@ -2,25 +2,25 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Feature, FeatureCollection } from 'geojson';
-import { PREDIO_FIELDS, type ConditionConfig, type ConditionId, type LayerConfig } from '../config/layers';
+import { ORDEN_CONDICION, PREDIOS_URL, type LayerConfig } from '../config/layers';
 import { METADATA } from '../config/metadata';
-import { CARD_UI } from '../config/normativeBenefits';
-import { cumpleCondicion } from '../lib/conditions';
+import type { CondicionActiva } from '../config/condiciones';
 import { loadGeoJSON } from '../lib/data';
+import type { NormasData, PredioProps } from '../lib/normas';
+import { predioPopup } from '../lib/popup';
 import { StreetLabelLayer } from '../lib/streetLabels';
 
 interface Props {
-  condition: ConditionConfig;
+  condicion: CondicionActiva;
   references: LayerConfig[];
+  normas: NormasData | null;
   onCount: (n: number | null) => void;
   onLoadingChange: (loading: boolean) => void;
   onLayerUnavailable: (id: string) => void;
-  /** Botón «Ver efectos normativos» del popup predial. */
-  onShowEffects: (feature: Feature, condition: ConditionId) => void;
 }
 
 interface ActiveLayer {
-  config: LayerConfig;
+  order: number;
   layer: L.Layer;
 }
 
@@ -30,42 +30,12 @@ const PANE_CALLES = 'calles';
 const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
-function predioPopup(props: Record<string, unknown>, condition: ConditionConfig, onEffects: () => void): HTMLElement {
-  const id = props[PREDIO_FIELDS.id];
-  const resultado = cumpleCondicion(props, condition.id) ? 'Cumple condición cartográfica' : CARD_UI.notIdentified;
-  const fila = (k: string, v: string) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`;
-  const el = document.createElement('div');
-  el.className = 'popup';
-  el.innerHTML = `
-    <table>
-      ${fila('Predio', id == null ? 'Sin dato' : String(id))}
-      ${fila('Condición activa', condition.buttonLabel)}
-      ${fila('Resultado', resultado)}
-    </table>`;
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'popup-button';
-  button.textContent = CARD_UI.popupButton;
-  button.addEventListener('click', onEffects);
-  const note = document.createElement('p');
-  note.className = 'popup-note';
-  note.textContent = METADATA.avisoReferencial;
-  el.append(button, note);
-  return el;
-}
-
-function buildLayer(
-  config: LayerConfig,
-  data: FeatureCollection,
-  renderer: L.Renderer,
-  condition?: ConditionConfig,
-  onEffects?: (feature: Feature) => void,
-) {
+function buildLayer(config: LayerConfig, data: FeatureCollection, renderer: L.Renderer) {
   const { style } = config;
   const filter = config.filter
     ? (f: Feature) => String(f.properties?.[config.filter!.property] ?? '') === config.filter!.value
     : undefined;
-  const interactive = config.category === 'predial' || Boolean(config.tooltip);
+  const interactive = Boolean(config.tooltip);
 
   return L.geoJSON(data, {
     filter,
@@ -74,35 +44,54 @@ function buildLayer(
       L.circleMarker(latlng, { ...style, radius: style.radius ?? 5, renderer, interactive }),
     onEachFeature: (feature, layer) => {
       const props = (feature.properties ?? {}) as Record<string, unknown>;
-      if (condition) {
-        layer.bindPopup(() => predioPopup(props, condition, () => onEffects?.(feature)), { maxWidth: 280 });
-      } else if (config.tooltip) {
+      if (config.tooltip) {
         layer.bindTooltip(escapeHtml(config.tooltip(props)), { direction: 'top', offset: [0, -4] });
       }
     },
   });
 }
 
-export default function MapView({
-  condition,
-  references,
-  onCount,
-  onLoadingChange,
-  onLayerUnavailable,
-  onShowEffects,
-}: Props) {
+/** Predios que cumplen la condición activa, con la simbología de su grupo. */
+function buildCondicionLayer(
+  condicion: CondicionActiva,
+  data: FeatureCollection,
+  renderer: L.Renderer,
+  normas: () => NormasData | null,
+) {
+  const s = condicion.grupo.simbologia;
+  return L.geoJSON(data, {
+    filter: (f) => ((f.properties as PredioProps | null)?.cond ?? []).includes(condicion.campo),
+    style: () => ({
+      renderer,
+      color: s.contorno,
+      weight: s.grosor,
+      fillColor: s.relleno,
+      fillOpacity: s.opacidadRelleno,
+    }),
+    onEachFeature: (feature, layer) => {
+      layer.bindPopup(() => predioPopup(feature.properties as PredioProps, condicion, normas()), {
+        maxWidth: 320,
+        minWidth: 260,
+      });
+    },
+  });
+}
+
+export default function MapView({ condicion, references, normas, onCount, onLoadingChange, onLayerUnavailable }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const rendererRef = useRef<L.Renderer | null>(null);
-  const predialRef = useRef<ActiveLayer | null>(null);
+  const condicionRef = useRef<ActiveLayer | null>(null);
   const refsRef = useRef(new Map<string, ActiveLayer>());
   const activeIdsRef = useRef(new Set<string>());
   const pendingRef = useRef(0);
   const firstFitRef = useRef(true);
+  const normasRef = useRef(normas);
+  normasRef.current = normas;
 
   // Callbacks en refs para no reiniciar efectos cuando cambian.
-  const cb = useRef({ onCount, onLoadingChange, onLayerUnavailable, onShowEffects });
-  cb.current = { onCount, onLoadingChange, onLayerUnavailable, onShowEffects };
+  const cb = useRef({ onCount, onLoadingChange, onLayerUnavailable });
+  cb.current = { onCount, onLoadingChange, onLayerUnavailable };
 
   const track = <T,>(p: Promise<T>) => {
     pendingRef.current += 1;
@@ -116,9 +105,9 @@ export default function MapView({
   /** Ordena el dibujo según `order` (un único lienzo comparte todas las capas). */
   const reorder = () => {
     const all = [...refsRef.current.values()];
-    if (predialRef.current) all.push(predialRef.current);
+    if (condicionRef.current) all.push(condicionRef.current);
     all
-      .sort((a, b) => a.config.order - b.config.order)
+      .sort((a, b) => a.order - b.order)
       .forEach((a) => a.layer instanceof L.FeatureGroup && a.layer.bringToFront());
   };
 
@@ -130,10 +119,12 @@ export default function MapView({
       zoomControl: true,
       preferCanvas: true,
     });
+    // crossOrigin: necesario para exportar el mapa como imagen.
     L.tileLayer(METADATA.mapaBase.url, {
       attribution: METADATA.mapaBase.atribucion,
       maxNativeZoom: METADATA.mapaBase.zoomNativoMax,
       maxZoom: 20,
+      crossOrigin: 'anonymous',
     }).addTo(map);
     map.createPane('etiquetas');
     map.getPane('etiquetas')!.style.zIndex = '450';
@@ -142,6 +133,7 @@ export default function MapView({
       pane: 'etiquetas',
       maxNativeZoom: METADATA.mapaBase.zoomNativoMax,
       maxZoom: 20,
+      crossOrigin: 'anonymous',
     });
     // Se quita la capa (no basta con maxZoom: Leaflet deja las teselas previas ampliadas).
     const ajustarEtiquetasBase = () => {
@@ -154,57 +146,51 @@ export default function MapView({
     map.createPane(PANE_CALLES);
     map.getPane(PANE_CALLES)!.style.zIndex = '460';
     map.getPane(PANE_CALLES)!.style.pointerEvents = 'none';
-    L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
+    L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map);
     rendererRef.current = L.canvas({ padding: 0.5, tolerance: 3 });
     mapRef.current = map;
     return () => {
       map.remove();
       mapRef.current = null;
-      predialRef.current = null;
+      condicionRef.current = null;
       refsRef.current.clear();
     };
   }, []);
 
-  // Cobertura predial: una sola visible a la vez.
+  // Condición activa: una sola visible a la vez. La vista se ajusta solo en la primera carga,
+  // para que el encuadre elegido se mantenga al cambiar de condición (útil al exportar).
   useEffect(() => {
     const map = mapRef.current!;
     let stale = false;
 
-    if (predialRef.current) {
-      map.removeLayer(predialRef.current.layer);
-      predialRef.current = null;
+    if (condicionRef.current) {
+      map.removeLayer(condicionRef.current.layer);
+      condicionRef.current = null;
     }
     cb.current.onCount(null);
 
-    track(loadGeoJSON(condition.url))
+    track(loadGeoJSON(PREDIOS_URL))
       .then((data) => {
         if (stale) return;
-        const layer = buildLayer(condition, data, rendererRef.current!, condition, (f) =>
-          cb.current.onShowEffects(f, condition.id),
-        ).addTo(map);
-        predialRef.current = { config: condition, layer };
+        const layer = buildCondicionLayer(condicion, data, rendererRef.current!, () => normasRef.current).addTo(map);
+        condicionRef.current = { order: ORDEN_CONDICION, layer };
         reorder();
-        cb.current.onCount(data.features.length);
-        const bounds = layer.getBounds();
-        if (bounds.isValid()) {
-          if (firstFitRef.current) {
-            map.fitBounds(bounds, { padding: [16, 16] });
-            firstFitRef.current = false;
-          } else {
-            map.flyToBounds(bounds, { padding: [16, 16], duration: 0.8 });
-          }
+        cb.current.onCount(layer.getLayers().length);
+        if (firstFitRef.current) {
+          const bounds = layer.getBounds();
+          if (bounds.isValid()) map.fitBounds(bounds, { padding: [16, 16] });
+          firstFitRef.current = false;
         }
       })
       .catch((err) => {
         if (stale) return;
-        console.warn(`[Visor DS 68] No se pudo cargar «${condition.label}» (${condition.url}): ${String(err)}`);
-        cb.current.onLayerUnavailable(condition.id);
+        console.warn(`[Visor DS 68] No se pudieron cargar los predios (${PREDIOS_URL}): ${String(err)}`);
       });
 
     return () => {
       stale = true;
     };
-  }, [condition]);
+  }, [condicion]);
 
   // Capas de referencia: se cargan al encenderlas y se mantienen al cambiar de condición.
   useEffect(() => {
@@ -233,7 +219,7 @@ export default function MapView({
                   pane: PANE_CALLES,
                 }).addTo(current)
               : buildLayer(config, data, rendererRef.current!).addTo(current);
-          refsRef.current.set(config.id, { config, layer });
+          refsRef.current.set(config.id, { order: config.order, layer });
           reorder();
         })
         .catch((err) => {

@@ -3,7 +3,6 @@
 
 export type LayerType = 'polygon' | 'line' | 'point' | 'label';
 export type LayerCategory = 'predial' | 'referencia';
-export type ConditionId = 'base' | 'vial' | 'metro';
 
 export interface LayerStyle {
   color: string;
@@ -36,79 +35,49 @@ export interface LayerConfig {
   tooltip?: (props: Record<string, unknown>) => string;
 }
 
-export interface ConditionConfig extends LayerConfig {
-  id: ConditionId;
-  /** Texto corto del botón selector. */
-  buttonLabel: string;
-}
-
 const DATA = `${import.meta.env.BASE_URL}data/`;
 
 /** Informe generado por scripts/prepare_data.py; indica qué capas existen. */
 export const DATA_REPORT_URL = `${DATA}data_report.json`;
 
-const FUENTE_PREDIOS = 'predios_dic2025.shp (campos CUMPLE_1, 20M_CONDB, VIAL_DS68, METRO_600)';
+/** Predios con las 7 condiciones (un solo archivo; cada condición se filtra en el navegador). */
+export const PREDIOS_URL = `${DATA}predios.geojson`;
+/** Normas de edificación por zona, convertidas desde el Excel del Plan Regulador. */
+export const NORMAS_URL = `${DATA}normas_zonas.json`;
+/** Orden de dibujo de la condición activa (entre las capas de referencia). */
+export const ORDEN_CONDICION = 50;
+
 const ESTACIONES_URL = `${DATA}estaciones_metro.geojson`;
 const FUENTE_ESTACIONES = 'ESTACIONES_DE_METRO_COMUNA_STGO_2.shp (campo Name)';
-
-/** Atributos prediales en los GeoJSON (nombres físicos del shapefile). */
-export const PREDIO_FIELDS = {
-  id: 'id_predio',
-  cumple: 'CUMPLE_1',
-  via20: '20M_CONDB',
-  vial: 'VIAL_DS68',
-  metro: 'METRO_600',
-} as const;
-
-export const CONDITIONS: ConditionConfig[] = [
-  {
-    id: 'base',
-    buttonLabel: 'Condición base',
-    label: 'Condición base: vía de 20 m',
-    url: `${DATA}predios_condicion_base.geojson`,
-    type: 'polygon',
-    style: { color: '#2F6B3A', weight: 0.8, fillColor: '#A9D6A5', fillOpacity: 0.65 },
-    visibleByDefault: true,
-    category: 'predial',
-    description:
-      'Predios que cumplen la condición territorial, sin las exclusiones registradas, y que enfrentan una vía de 20 m o más entre líneas oficiales.',
-    source: FUENTE_PREDIOS,
-    order: 50,
-  },
-  {
-    id: 'vial',
-    buttonLabel: 'Condición vial',
-    label: 'Condición vial: expresas y troncales',
-    url: `${DATA}predios_condicion_vial.geojson`,
-    type: 'polygon',
-    style: { color: '#1F5FA8', weight: 0.8, fillColor: '#9DD1EE', fillOpacity: 0.65 },
-    visibleByDefault: false,
-    category: 'predial',
-    description:
-      'Predios que cumplen la condición base e intersectan la franja de 200 m de vías expresas existentes y/o la franja de 100 m de vías troncales existentes.',
-    source: FUENTE_PREDIOS,
-    order: 50,
-  },
-  {
-    id: 'metro',
-    buttonLabel: 'Condición Metro',
-    label: 'Condición Metro: recorrido peatonal de 600 m',
-    url: `${DATA}predios_condicion_metro.geojson`,
-    type: 'polygon',
-    style: { color: '#5E3488', weight: 0.8, fillColor: '#CDB8E8', fillOpacity: 0.65 },
-    visibleByDefault: false,
-    category: 'predial',
-    description:
-      'Predios que cumplen la condición base y se encuentran dentro del área de 600 m de recorrido peatonal respecto de una estación de Metro existente o proyectada habilitante.',
-    source: FUENTE_PREDIOS,
-    order: 50,
-  },
-];
 
 const tooltipEstacion = (p: Record<string, unknown>) =>
   `${String(p.nombre ?? '')}${p.linea ? ` · ${String(p.linea)}` : ''}`;
 
 export const REFERENCE_LAYERS: LayerConfig[] = [
+  {
+    id: 'manzanas',
+    label: 'Manzanas',
+    url: `${DATA}manzanas.geojson`,
+    type: 'polygon',
+    style: { color: '#4A4F55', weight: 1, fillOpacity: 0 },
+    visibleByDefault: false,
+    category: 'referencia',
+    description: 'Manzanas de la comuna (1.441).',
+    source: 'Manzanas.shp',
+    order: 55,
+  },
+  {
+    id: 'predios_comuna',
+    label: 'Predios de la comuna',
+    url: PREDIOS_URL,
+    type: 'polygon',
+    style: { color: '#8C8C8C', weight: 0.4, fillOpacity: 0 },
+    visibleByDefault: false,
+    category: 'referencia',
+    description: 'Todos los predios de la comuna, solo contorno.',
+    source: 'predios_zona_oct_2026.shp',
+    order: 45,
+  },
   {
     id: 'limite_comunal',
     label: 'Límite comunal',

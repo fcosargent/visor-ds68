@@ -4,9 +4,11 @@ export const METADATA = {
   titulo: 'Condiciones territoriales DS 68',
   subtitulo: 'Comuna de Santiago',
   /** Fecha de la cartografía procesada (coberturas DS 68). */
-  fechaCartografia: '26 de octubre de 2026',
+  fechaCartografia: '6 de noviembre de 2026',
   /** Base predial utilizada. */
-  basePredial: 'Predios, diciembre de 2025',
+  basePredial: 'Predios por zona del Plan Regulador, octubre de 2026',
+  /** Fuente breve que se imprime en la imagen exportada. */
+  fuenteImagen: 'Municipalidad de Santiago – DS 68/2026',
   fuente:
     'Elaboración propia, Subdirección de Asesoría Urbana – SECPLAN, Ilustre Municipalidad de Santiago. ' +
     'Criterios normativos basados en el Decreto Supremo N.° 68 del Ministerio de Vivienda y Urbanismo, ' +

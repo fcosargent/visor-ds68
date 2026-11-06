@@ -1,0 +1,2625 @@
+{
+ "fuente": "Normas edificacion PRCS 2018 con Sector especial D11 (1).xlsx, hoja «Zonas» (más Zona D para D11)",
+ "nota": "texto = valor original del Excel; valor = primer número, solo si el texto empieza con un número.",
+ "zonas": {
+  "A": {
+   "nombre": "ZONA A",
+   "constr_viv": {
+    "texto": "8,1 (fusión 6,23)",
+    "valor": 8.1
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "41,5 (16 pisos + rasante)",
+    "valor": 41.5
+   },
+   "constr_inc_viv": {
+    "texto": "9",
+    "valor": 9.0
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "No determinada (piso retirado)",
+    "valor": null
+   }
+  },
+  "AR": {
+   "nombre": "SUBZONA AR",
+   "constr_viv": {
+    "texto": "8,1 (fusión 6,23)",
+    "valor": 8.1
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de zona A",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "A1": {
+   "nombre": "ZCH A1",
+   "constr_viv": {
+    "texto": "6,3 (fusión 4,84)",
+    "valor": 6.3
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "35,5 (14 pisos)",
+    "valor": 35.5
+   },
+   "constr_inc_viv": {
+    "texto": "6,8",
+    "valor": 6.8
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "38,5 (15 pisos)",
+    "valor": 38.5
+   }
+  },
+  "A1R": {
+   "nombre": "SUBZONA A1R",
+   "constr_viv": {
+    "texto": "6,3 (fusión 4,84)",
+    "valor": 6.3
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de A1",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "A2": {
+   "nombre": "ZCH A2",
+   "constr_viv": {
+    "texto": "3,2 (fusión 2,46)",
+    "valor": 3.2
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "18 (7 pisos)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "A3AB": {
+   "nombre": "ZCH A3a_b",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "45,75 (11 o 18 pisos)",
+    "valor": 45.75
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "A3C": {
+   "nombre": "ZCH A3c",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "57,8 (14 o 23 pisos)",
+    "valor": 57.8
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "A4": {
+   "nombre": "ZCH A4",
+   "constr_viv": {
+    "texto": "3,2 (fusión 2,46)",
+    "valor": 3.2
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "18 (7 pisos)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "A5": {
+   "nombre": "SE A5",
+   "constr_viv": {
+    "texto": "7,2 (fusión 5,53)",
+    "valor": 7.2
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "41,5 (16 pisos)",
+    "valor": 41.5
+   },
+   "constr_inc_viv": {
+    "texto": "8,1",
+    "valor": 8.1
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "No determinada (piso retirado)",
+    "valor": null
+   }
+  },
+  "A5R": {
+   "nombre": "SUBZONA A5R",
+   "constr_viv": {
+    "texto": "7,2 (fusión 5,53)",
+    "valor": 7.2
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de A5",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "A6": {
+   "nombre": "SE A6",
+   "constr_viv": {
+    "texto": "5,6 (fusión 4,31)",
+    "valor": 5.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "25,5 (10 pisos)",
+    "valor": 25.5
+   },
+   "constr_inc_viv": {
+    "texto": "6,5",
+    "valor": 6.5
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "No determinada (piso retirado)",
+    "valor": null
+   }
+  },
+  "A6R": {
+   "nombre": "SUBZONA A6R",
+   "constr_viv": {
+    "texto": "5,6 (fusión 4,31)",
+    "valor": 5.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de A6",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "A7": {
+   "nombre": "ZCH A7",
+   "constr_viv": {
+    "texto": "5,1 (fusión 3,92)",
+    "valor": 5.1
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "26m (23m + 3m) (9 pisos+ piso retirado inscrito en rasante 45°)",
+    "valor": 26.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "BORIENTE": {
+   "nombre": "ZONA B oriente",
+   "constr_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "22,5 (9 pisos)",
+    "valor": 22.5
+   },
+   "constr_inc_viv": {
+    "texto": "4,3",
+    "valor": 4.3
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "27,5 (11 pisos)",
+    "valor": 27.5
+   }
+  },
+  "BRO": {
+   "nombre": "SUBZONA Bro",
+   "constr_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de zona B",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "BPONIENTE": {
+   "nombre": "ZONA B poniente",
+   "constr_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "22,5 (9 pisos)",
+    "valor": 22.5
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "BRP": {
+   "nombre": "SUBZONA Brp",
+   "constr_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de zona B",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B1": {
+   "nombre": "ZCH B1",
+   "constr_viv": {
+    "texto": "3,2",
+    "valor": 3.2
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "20,5 (8 pisos)",
+    "valor": 20.5
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B2A": {
+   "nombre": "SE B2a",
+   "constr_viv": {
+    "texto": "4,8",
+    "valor": 4.8
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "30,5 (12 pisos)",
+    "valor": 30.5
+   },
+   "constr_inc_viv": {
+    "texto": "6,2",
+    "valor": 6.2
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "40,5 (16 pisos)",
+    "valor": 40.5
+   }
+  },
+  "B2A1": {
+   "nombre": "SE B2a1",
+   "constr_viv": {
+    "texto": "4,8",
+    "valor": 4.8
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "30,5 (12 pisos)",
+    "valor": 30.5
+   },
+   "constr_inc_viv": {
+    "texto": "6,2",
+    "valor": 6.2
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "40,5 (16 pisos)",
+    "valor": 40.5
+   }
+  },
+  "B2B": {
+   "nombre": "SE B2b",
+   "constr_viv": {
+    "texto": "4,8",
+    "valor": 4.8
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "30,5 (12 pisos)",
+    "valor": 30.5
+   },
+   "constr_inc_viv": {
+    "texto": "5,5",
+    "valor": 5.5
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "35,5 (14 pisos)",
+    "valor": 35.5
+   }
+  },
+  "B2R": {
+   "nombre": "SUBZONA B2R",
+   "constr_viv": {
+    "texto": "4,8",
+    "valor": 4.8
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de B2",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B3": {
+   "nombre": "ZCH B3",
+   "constr_viv": {
+    "texto": "2,2",
+    "valor": 2.2
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "12 (5pisos) 9m (alas laterales o posteriores)",
+    "valor": 12.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B4": {
+   "nombre": "ZCH B4",
+   "constr_viv": {
+    "texto": "2,4",
+    "valor": 2.4
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "15,5 (6 pisos)",
+    "valor": 15.5
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B5": {
+   "nombre": "SE B5",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "30,65 (10 o 12 pisos)",
+    "valor": 30.65
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B6": {
+   "nombre": "SE B6",
+   "constr_viv": {
+    "texto": "3,2",
+    "valor": 3.2
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "20,5 (8 pisos)",
+    "valor": 20.5
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B6R": {
+   "nombre": "SUBZONA B6R",
+   "constr_viv": {
+    "texto": "3,2",
+    "valor": 3.2
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de B6",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B7AB": {
+   "nombre": "ZCH B7a_b",
+   "constr_viv": {
+    "texto": "2,8",
+    "valor": 2.8
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "18 (7 pisos)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B8": {
+   "nombre": "SE B8",
+   "constr_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "24 (10 pisos) 12m (alas laterales o posteriores)",
+    "valor": 24.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B8R": {
+   "nombre": "SUBZONA B8R",
+   "constr_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de B8",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B9": {
+   "nombre": "SE B9",
+   "constr_viv": {
+    "texto": "4",
+    "valor": 4.0
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "35 (14 pisos) 12m (alas laterales o posteriores)",
+    "valor": 35.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B9R": {
+   "nombre": "SUBZONA B9R",
+   "constr_viv": {
+    "texto": "4",
+    "valor": 4.0
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de B9",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B10": {
+   "nombre": "SE B10",
+   "constr_viv": {
+    "texto": "3,4",
+    "valor": 3.4
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "20 (8 pisos) 9m (alas laterales o posteriores)",
+    "valor": 20.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B10R": {
+   "nombre": "SUBZONA B10R",
+   "constr_viv": {
+    "texto": "3,4",
+    "valor": 3.4
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de B10",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B11": {
+   "nombre": "SE B11",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "22,5 (9 pisos)",
+    "valor": 22.5
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B11R": {
+   "nombre": "SUBZONA B11R",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de B11",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B12": {
+   "nombre": "SE B12",
+   "constr_viv": {
+    "texto": "1,6",
+    "valor": 1.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "12 (5 pisos)",
+    "valor": 12.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B12R": {
+   "nombre": "SUBZONA B12R",
+   "constr_viv": {
+    "texto": "1,6",
+    "valor": 1.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de B12",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B13": {
+   "nombre": "SE B13",
+   "constr_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "28 + 3m(9 pisos + piso retirado)",
+    "valor": 28.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B14": {
+   "nombre": "SE B14",
+   "constr_viv": {
+    "texto": "2,7",
+    "valor": 2.7
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "10(4pisos P y C) 17.5 (7p aislado)",
+    "valor": 10.0
+   },
+   "constr_inc_viv": {
+    "texto": "4,3",
+    "valor": 4.3
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "27,5 (11 pisos)",
+    "valor": 27.5
+   }
+  },
+  "B14R": {
+   "nombre": "SUBZONA B14R",
+   "constr_viv": {
+    "texto": "2,7",
+    "valor": 2.7
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de B14",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B15A": {
+   "nombre": "SE B15a",
+   "constr_viv": {
+    "texto": "4,8",
+    "valor": 4.8
+   },
+   "densidad": {
+    "texto": "2740",
+    "valor": 2740.0
+   },
+   "altura": {
+    "texto": "30,5 (12 pisos)",
+    "valor": 30.5
+   },
+   "constr_inc_viv": {
+    "texto": "6,2",
+    "valor": 6.2
+   },
+   "dens_inc": {
+    "texto": "3540",
+    "valor": 3540.0
+   },
+   "alt_inc": {
+    "texto": "40,5 (16 pisos)",
+    "valor": 40.5
+   }
+  },
+  "B15R": {
+   "nombre": "SUBZONA B15R",
+   "constr_viv": {
+    "texto": "4,8",
+    "valor": 4.8
+   },
+   "densidad": {
+    "texto": "2740",
+    "valor": 2740.0
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de B15",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "B15B1": {
+   "nombre": "SE B15b1",
+   "constr_viv": {
+    "texto": "4,8",
+    "valor": 4.8
+   },
+   "densidad": {
+    "texto": "2740",
+    "valor": 2740.0
+   },
+   "altura": {
+    "texto": "30,5 (12 pisos)",
+    "valor": 30.5
+   },
+   "constr_inc_viv": {
+    "texto": "6,9",
+    "valor": 6.9
+   },
+   "dens_inc": {
+    "texto": "3940",
+    "valor": 3940.0
+   },
+   "alt_inc": {
+    "texto": "45,5 (18 pisos)",
+    "valor": 45.5
+   }
+  },
+  "B15C": {
+   "nombre": "SE B15c",
+   "constr_viv": {
+    "texto": "2",
+    "valor": 2.0
+   },
+   "densidad": {
+    "texto": "1140",
+    "valor": 1140.0
+   },
+   "altura": {
+    "texto": "14 (5 pisos)",
+    "valor": 14.0
+   },
+   "constr_inc_viv": {
+    "texto": "2,7",
+    "valor": 2.7
+   },
+   "dens_inc": {
+    "texto": "1600",
+    "valor": 1600.0
+   },
+   "alt_inc": {
+    "texto": "18 (7 pisos)",
+    "valor": 18.0
+   }
+  },
+  "B16": {
+   "nombre": "SE B16",
+   "constr_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "22,5 (9 pisos)",
+    "valor": 22.5
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "DPONIENTE": {
+   "nombre": "ZONA D poniente",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "15 (6 pisos)",
+    "valor": 15.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "DR": {
+   "nombre": "SUBZONA DR",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de la zona D",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D1": {
+   "nombre": "ZCH D1",
+   "constr_viv": {
+    "texto": "2",
+    "valor": 2.0
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "12 (5 pisos) 9m (alas laterales o posteriores)",
+    "valor": 12.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D2": {
+   "nombre": "SE D2",
+   "constr_viv": {
+    "texto": "5,8",
+    "valor": 5.8
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "35 (14 pisos + rasante) 12m (alas laterales o posteriores)",
+    "valor": 35.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D2R": {
+   "nombre": "SUBZONA D2R",
+   "constr_viv": {
+    "texto": "5,8",
+    "valor": 5.8
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de D2",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D3": {
+   "nombre": "SE D3",
+   "constr_viv": {
+    "texto": "2,4",
+    "valor": 2.4
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "12 (5 pisos) 9m (alas laterales o posteriores)",
+    "valor": 12.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D3R": {
+   "nombre": "SUBZONA D3R",
+   "constr_viv": {
+    "texto": "2,4",
+    "valor": 2.4
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de D3",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D4": {
+   "nombre": "SE D4",
+   "constr_viv": {
+    "texto": "2,8",
+    "valor": 2.8
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "17m (14m + 3m) (6 pisos + pisos rasante de 45°) 9m (alas laterales o posteriores)",
+    "valor": 17.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D5": {
+   "nombre": "SE D5",
+   "constr_viv": {
+    "texto": "3",
+    "valor": 3.0
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "18 (7 pisos) 9m (alas laterales o posteriores)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D5R": {
+   "nombre": "SUBZONA D5R",
+   "constr_viv": {
+    "texto": "3",
+    "valor": 3.0
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de D5",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D6": {
+   "nombre": "SE D6",
+   "constr_viv": {
+    "texto": "2,4",
+    "valor": 2.4
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "17,5 (7pisos)",
+    "valor": 17.5
+   },
+   "constr_inc_viv": {
+    "texto": "3,7 (aislado)",
+    "valor": 3.7
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "27,5 (11 pisos aislado)",
+    "valor": 27.5
+   }
+  },
+  "D6R": {
+   "nombre": "SUBZONA D6R",
+   "constr_viv": {
+    "texto": "2,4",
+    "valor": 2.4
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de D6",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D6A": {
+   "nombre": "SE D6a",
+   "constr_viv": {
+    "texto": "2,4",
+    "valor": 2.4
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "7m (2 pisos) (Continuo y Pareado) 17,5m (7pisos) (Aislado)",
+    "valor": 7.0
+   },
+   "constr_inc_viv": {
+    "texto": "3,7 (aislado)",
+    "valor": 3.7
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "27,5 (11 pisos aislado)",
+    "valor": 27.5
+   }
+  },
+  "D7": {
+   "nombre": "ZCH D7",
+   "constr_viv": {
+    "texto": "1",
+    "valor": 1.0
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "7,5 (3 pisos)",
+    "valor": 7.5
+   },
+   "constr_inc_viv": {
+    "texto": "1,7 (aislado)",
+    "valor": 1.7
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "12,5 (5 pisos aislado)",
+    "valor": 12.5
+   }
+  },
+  "D8": {
+   "nombre": "SE D8",
+   "constr_viv": {
+    "texto": "1,3",
+    "valor": 1.3
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "7,5 (3p pareado - continuo) 10 (4 p aislado)",
+    "valor": 7.5
+   },
+   "constr_inc_viv": {
+    "texto": "2,4 (aislado)",
+    "valor": 2.4
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "17,5 (7 pisos aislado)",
+    "valor": 17.5
+   }
+  },
+  "D8R": {
+   "nombre": "SUBZONA D8R",
+   "constr_viv": {
+    "texto": "1,3",
+    "valor": 1.3
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de D8",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D9": {
+   "nombre": "SE D9",
+   "constr_viv": {
+    "texto": "2,7",
+    "valor": 2.7
+   },
+   "densidad": {
+    "texto": "865",
+    "valor": 865.0
+   },
+   "altura": {
+    "texto": "9 (3 pisos)",
+    "valor": 9.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D10": {
+   "nombre": "ZCH D10",
+   "constr_viv": {
+    "texto": "2,7",
+    "valor": 2.7
+   },
+   "densidad": {
+    "texto": "865",
+    "valor": 865.0
+   },
+   "altura": {
+    "texto": "9 (3 pisos)",
+    "valor": 9.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E": {
+   "nombre": "ZONA E",
+   "constr_viv": {
+    "texto": "2",
+    "valor": 2.0
+   },
+   "densidad": {
+    "texto": "1140",
+    "valor": 1140.0
+   },
+   "altura": {
+    "texto": "14 (5 pisos)",
+    "valor": 14.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "ER": {
+   "nombre": "SUBZONA ER",
+   "constr_viv": {
+    "texto": "2",
+    "valor": 2.0
+   },
+   "densidad": {
+    "texto": "1140",
+    "valor": 1140.0
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de la zona E",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E1A": {
+   "nombre": "ZCH E1a",
+   "constr_viv": {
+    "texto": "1",
+    "valor": 1.0
+   },
+   "densidad": {
+    "texto": "320",
+    "valor": 320.0
+   },
+   "altura": {
+    "texto": "5 (1 piso)",
+    "valor": 5.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E1B": {
+   "nombre": "ZCH E1b",
+   "constr_viv": {
+    "texto": "2",
+    "valor": 2.0
+   },
+   "densidad": {
+    "texto": "1140",
+    "valor": 1140.0
+   },
+   "altura": {
+    "texto": "14 (5 pisos)",
+    "valor": 14.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E2": {
+   "nombre": "SE E2",
+   "constr_viv": {
+    "texto": "5,5",
+    "valor": 5.5
+   },
+   "densidad": {
+    "texto": "1140",
+    "valor": 1140.0
+   },
+   "altura": {
+    "texto": "35 (14 pisos)",
+    "valor": 35.0
+   },
+   "constr_inc_viv": {
+    "texto": "7,1 (aislada)",
+    "valor": 7.1
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "45 (18 pisos aislado)",
+    "valor": 45.0
+   }
+  },
+  "E3": {
+   "nombre": "SE E3",
+   "constr_viv": {
+    "texto": "3,84",
+    "valor": 3.84
+   },
+   "densidad": {
+    "texto": "1230",
+    "valor": 1230.0
+   },
+   "altura": {
+    "texto": "20(8 pisos + rasante cuerpo //) 9m (alas laterales o posteriores)",
+    "valor": 20.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E3R": {
+   "nombre": "SUBZONA E3R",
+   "constr_viv": {
+    "texto": "3,84",
+    "valor": 3.84
+   },
+   "densidad": {
+    "texto": "1230",
+    "valor": 1230.0
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de E3",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E4": {
+   "nombre": "SE E4",
+   "constr_viv": {
+    "texto": "4,23",
+    "valor": 4.23
+   },
+   "densidad": {
+    "texto": "2460",
+    "valor": 2460.0
+   },
+   "altura": {
+    "texto": "35 (14 pisos+ rasante cuerpo //) 12m (alas laterales o posteriores)",
+    "valor": 35.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E4R": {
+   "nombre": "SUBZONA E4R",
+   "constr_viv": {
+    "texto": "4,23",
+    "valor": 4.23
+   },
+   "densidad": {
+    "texto": "2460",
+    "valor": 2460.0
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de E4",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E5": {
+   "nombre": "SE E5",
+   "constr_viv": {
+    "texto": "3,07",
+    "valor": 3.07
+   },
+   "densidad": {
+    "texto": "1800",
+    "valor": 1800.0
+   },
+   "altura": {
+    "texto": "18 (7 pisos + rasante cuerpo//) 9m (alas laterales o posteriores)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E5R": {
+   "nombre": "SUBZONA E5R",
+   "constr_viv": {
+    "texto": "3,07",
+    "valor": 3.07
+   },
+   "densidad": {
+    "texto": "1800",
+    "valor": 1800.0
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de E5",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E6": {
+   "nombre": "SE E6",
+   "constr_viv": {
+    "texto": "2,7",
+    "valor": 2.7
+   },
+   "densidad": {
+    "texto": "1140",
+    "valor": 1140.0
+   },
+   "altura": {
+    "texto": "17,5 (7 pisos)",
+    "valor": 17.5
+   },
+   "constr_inc_viv": {
+    "texto": "3,5 (aislada)",
+    "valor": 3.5
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": "22,5 (9 pisos aislado)",
+    "valor": 22.5
+   }
+  },
+  "E6R": {
+   "nombre": "SUBZONA E6R",
+   "constr_viv": {
+    "texto": "2,7",
+    "valor": 2.7
+   },
+   "densidad": {
+    "texto": "1140",
+    "valor": 1140.0
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de E6",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E7": {
+   "nombre": "ZCH E7",
+   "constr_viv": {
+    "texto": "2,8",
+    "valor": 2.8
+   },
+   "densidad": {
+    "texto": "1600",
+    "valor": 1600.0
+   },
+   "altura": {
+    "texto": "18 (7 pisos)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E7R": {
+   "nombre": "SUBZONA E7R",
+   "constr_viv": {
+    "texto": "2,8",
+    "valor": 2.8
+   },
+   "densidad": {
+    "texto": "1600",
+    "valor": 1600.0
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de E7",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E8": {
+   "nombre": "ZCH E8",
+   "constr_viv": {
+    "texto": "2,7",
+    "valor": 2.7
+   },
+   "densidad": {
+    "texto": "865",
+    "valor": 865.0
+   },
+   "altura": {
+    "texto": "9 (3 pisos)",
+    "valor": 9.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E9": {
+   "nombre": "SE E9",
+   "constr_viv": {
+    "texto": "2",
+    "valor": 2.0
+   },
+   "densidad": {
+    "texto": "1140",
+    "valor": 1140.0
+   },
+   "altura": {
+    "texto": "14 (5 pisos)",
+    "valor": 14.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E9R": {
+   "nombre": "SUBZONA E9R",
+   "constr_viv": {
+    "texto": "2",
+    "valor": 2.0
+   },
+   "densidad": {
+    "texto": "1140",
+    "valor": 1140.0
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de E9",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E10A": {
+   "nombre": "SE E10a",
+   "constr_viv": {
+    "texto": "2,8",
+    "valor": 2.8
+   },
+   "densidad": {
+    "texto": "1600",
+    "valor": 1600.0
+   },
+   "altura": {
+    "texto": "18 (7 pisos)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E10R": {
+   "nombre": "SUBZONA E10R",
+   "constr_viv": {
+    "texto": "2,8",
+    "valor": 2.8
+   },
+   "densidad": {
+    "texto": "1600",
+    "valor": 1600.0
+   },
+   "altura": {
+    "texto": "Colindante ICH, sin superar la altura de E10",
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E10A1": {
+   "nombre": "SE E10a1",
+   "constr_viv": {
+    "texto": "2,8",
+    "valor": 2.8
+   },
+   "densidad": {
+    "texto": "1600",
+    "valor": 1600.0
+   },
+   "altura": {
+    "texto": "18 (7 pisos)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E10B": {
+   "nombre": "SE E10b",
+   "constr_viv": {
+    "texto": "2,8",
+    "valor": 2.8
+   },
+   "densidad": {
+    "texto": "1600",
+    "valor": 1600.0
+   },
+   "altura": {
+    "texto": "18 (7 pisos)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "dens_inc": {
+    "texto": "2060",
+    "valor": 2060.0
+   },
+   "alt_inc": {
+    "texto": "23 (9 pisos)",
+    "valor": 23.0
+   }
+  },
+  "E10C": {
+   "nombre": "SE E10c",
+   "constr_viv": {
+    "texto": "2,8",
+    "valor": 2.8
+   },
+   "densidad": {
+    "texto": "1600",
+    "valor": 1600.0
+   },
+   "altura": {
+    "texto": "18 (7 pisos)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "dens_inc": {
+    "texto": "2060",
+    "valor": 2060.0
+   },
+   "alt_inc": {
+    "texto": "23 (9 pisos)",
+    "valor": 23.0
+   }
+  },
+  "E10C1": {
+   "nombre": "SE E10c1",
+   "constr_viv": {
+    "texto": "2,8",
+    "valor": 2.8
+   },
+   "densidad": {
+    "texto": "1600",
+    "valor": 1600.0
+   },
+   "altura": {
+    "texto": "18 (7 pisos)",
+    "valor": 18.0
+   },
+   "constr_inc_viv": {
+    "texto": "3,6",
+    "valor": 3.6
+   },
+   "dens_inc": {
+    "texto": "2060",
+    "valor": 2060.0
+   },
+   "alt_inc": {
+    "texto": "23 (9 pisos)",
+    "valor": 23.0
+   }
+  },
+  "E11": {
+   "nombre": "ZCH E11",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "9 (3 pisos)",
+    "valor": 9.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E12": {
+   "nombre": "SE E12",
+   "constr_viv": {
+    "texto": "2",
+    "valor": 2.0
+   },
+   "densidad": {
+    "texto": "640",
+    "valor": 640.0
+   },
+   "altura": {
+    "texto": "7 (2 pisos)",
+    "valor": 7.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E13": {
+   "nombre": "SE E13",
+   "constr_viv": {
+    "texto": "1",
+    "valor": 1.0
+   },
+   "densidad": {
+    "texto": "320",
+    "valor": 320.0
+   },
+   "altura": {
+    "texto": "5 (1 piso)",
+    "valor": 5.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E14": {
+   "nombre": "SE E14",
+   "constr_viv": {
+    "texto": "2,1",
+    "valor": 2.1
+   },
+   "densidad": {
+    "texto": "865",
+    "valor": 865.0
+   },
+   "altura": {
+    "texto": "7,5 (2 pisos)",
+    "valor": 7.5
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "E15": {
+   "nombre": "SE E15",
+   "constr_viv": {
+    "texto": "2",
+    "valor": 2.0
+   },
+   "densidad": {
+    "texto": "1140",
+    "valor": 1140.0
+   },
+   "altura": {
+    "texto": "14 (5 pisos)",
+    "valor": 14.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "F": {
+   "nombre": "ZONA F",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": null,
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "G": {
+   "nombre": "ZONA G",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": null,
+    "valor": null
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "H": {
+   "nombre": "ZONA H",
+   "constr_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "densidad": {
+    "texto": null,
+    "valor": null
+   },
+   "altura": {
+    "texto": "10 (4 pisos)",
+    "valor": 10.0
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  },
+  "D11": {
+   "nombre": "SE D11",
+   "constr_viv": {
+    "texto": "2",
+    "valor": 2.0
+   },
+   "densidad": {
+    "texto": "895",
+    "valor": 895.0
+   },
+   "altura": {
+    "texto": "5,5 (2 pisos)",
+    "valor": 5.5
+   },
+   "constr_inc_viv": {
+    "texto": null,
+    "valor": null
+   },
+   "dens_inc": {
+    "texto": null,
+    "valor": null
+   },
+   "alt_inc": {
+    "texto": null,
+    "valor": null
+   }
+  }
+ }
+}
