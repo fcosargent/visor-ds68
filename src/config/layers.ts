@@ -33,6 +33,13 @@ export interface LayerConfig {
   minZoom?: number;
   /** Atributos que se muestran como etiqueta flotante. */
   tooltip?: (props: Record<string, unknown>) => string;
+  /** Ventana emergente con todos los campos, en el orden y con los alias indicados. */
+  ficha?: FichaConfig;
+}
+
+export interface FichaConfig {
+  titulo: string;
+  campos: { campo: string; alias: string; enlace?: boolean }[];
 }
 
 const DATA = `${import.meta.env.BASE_URL}data/`;
@@ -84,7 +91,7 @@ export const REFERENCE_LAYERS: LayerConfig[] = [
     url: `${DATA}limite_comunal.geojson`,
     type: 'polygon',
     style: { color: '#3D4248', weight: 2, dashArray: '6 4', fillOpacity: 0 },
-    visibleByDefault: false,
+    visibleByDefault: true,
     category: 'referencia',
     description: 'Límite de la comuna de Santiago.',
     source: 'LIMITE_COMUNA.shp',
@@ -109,7 +116,7 @@ export const REFERENCE_LAYERS: LayerConfig[] = [
     url: ESTACIONES_URL,
     type: 'point',
     style: { color: '#C62828', weight: 2, fillColor: '#FFFFFF', fillOpacity: 1, radius: 5 },
-    visibleByDefault: true,
+    visibleByDefault: false,
     category: 'referencia',
     description: 'Estaciones de Metro en operación.',
     source: FUENTE_ESTACIONES,
@@ -123,7 +130,7 @@ export const REFERENCE_LAYERS: LayerConfig[] = [
     url: ESTACIONES_URL,
     type: 'point',
     style: { color: '#B85C00', weight: 1.5, fillColor: '#F39C33', fillOpacity: 1, radius: 5 },
-    visibleByDefault: true,
+    visibleByDefault: false,
     category: 'referencia',
     description: 'Estaciones de Metro proyectadas.',
     source: FUENTE_ESTACIONES,
@@ -216,6 +223,55 @@ export const REFERENCE_LAYERS: LayerConfig[] = [
     description: 'Zonas de Conservación Histórica vigentes (marzo de 2025).',
     source: 'ZONAS_DE_CONSERVACION_HISTORICA_MARZO_2025.shp',
     order: 60,
+  },
+  {
+    id: 'mh',
+    label: 'Monumentos Históricos (MH)',
+    url: `${DATA}monumentos_historicos.geojson`,
+    type: 'polygon',
+    style: { color: '#8E1B3A', weight: 2, fillColor: '#8E1B3A', fillOpacity: 0.08 },
+    visibleByDefault: false,
+    category: 'referencia',
+    description: 'Monumentos Históricos de la comuna (marzo de 2025). Clic en uno para ver su ficha.',
+    source: 'MONUMENTOS_HISTORICOS_MARZO_2025.shp',
+    order: 62,
+    ficha: {
+      titulo: 'Monumentos Históricos (MH), comuna de Santiago.',
+      campos: [
+        { campo: 'DECRETO', alias: 'Decreto y fecha de publicación en el Diario Oficial' },
+        { campo: 'DIRECCION', alias: 'Dirección' },
+        { campo: 'FECHA', alias: 'Fecha de la cobertura' },
+        { campo: 'FICHA_MH', alias: 'Ver ficha del Monumento Histórico', enlace: true },
+        { campo: 'FUENTE', alias: 'Fuente' },
+        { campo: 'ID', alias: 'ID' },
+        { campo: 'N°_MH', alias: 'Número de Monumento Histórico (código)' },
+        { campo: 'NOMBRE_MH', alias: 'Nombre Monumento Histórico' },
+      ],
+    },
+  },
+  {
+    id: 'ich',
+    label: 'Inmuebles de Conservación Histórica (ICH)',
+    url: `${DATA}inmuebles_conservacion_historica.geojson`,
+    type: 'polygon',
+    style: { color: '#C98A00', weight: 1.2, fillColor: '#C98A00', fillOpacity: 0.06 },
+    visibleByDefault: false,
+    category: 'referencia',
+    description: 'Inmuebles de Conservación Histórica de la comuna (marzo de 2025). Clic en uno para ver su ficha.',
+    source: 'INMUEBLES_DE_CONSERVACION_HISTORICA_MARZO_2025.shp',
+    order: 61,
+    ficha: {
+      titulo: 'Inmuebles de Conservación Histórica (ICH), comuna de Santiago.',
+      campos: [
+        { campo: 'DIRECCION', alias: 'Dirección' },
+        { campo: 'FECHA', alias: 'Fecha de la cobertura' },
+        { campo: 'FICHA_ICH', alias: 'Ver ficha del Inmueble de Conservación Histórica', enlace: true },
+        { campo: 'FUENTE', alias: 'Fuente' },
+        { campo: 'ID', alias: 'ID' },
+        { campo: 'N°_ICH', alias: 'Número de Inmueble de Conservación Histórica (código)' },
+        { campo: 'NOMBRE_ICH', alias: 'Nombre Inmueble de Conservación Histórica' },
+      ],
+    },
   },
 ];
 

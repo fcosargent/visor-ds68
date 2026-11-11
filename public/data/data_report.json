@@ -1,5 +1,5 @@
 {
-  "generado": "2026-11-06T12:47:51",
+  "generado": "2026-11-11T17:47:18",
   "origen": [
     "3. Coberturas DS68",
     "3. Coberturas DS68 (respaldo)"
@@ -399,6 +399,49 @@
         }
       }
     },
+    "MONUMENTOS_HISTORICOS_MARZO_2025.shp": {
+      "archivo": "MONUMENTOS_HISTORICOS_MARZO_2025.shp",
+      "tipo_geometria": "Polygon",
+      "registros": 115,
+      "crs_original": "EPSG:32719",
+      "crs_nombre": "WGS 84 / UTM zone 19S",
+      "codificacion": "UTF-8",
+      "componentes_faltantes": [],
+      "campos": [
+        "ID",
+        "N°_MH",
+        "NOMBRE_MH",
+        "DECRETO",
+        "DIRECCION",
+        "FICHA_MH",
+        "FECHA",
+        "FUENTE"
+      ],
+      "geometrias_vacias": 0,
+      "geometrias_invalidas": 0,
+      "geometrias_invalidas_tras_reparar": 0
+    },
+    "INMUEBLES_DE_CONSERVACION_HISTORICA_MARZO_2025.shp": {
+      "archivo": "INMUEBLES_DE_CONSERVACION_HISTORICA_MARZO_2025.shp",
+      "tipo_geometria": "Polygon",
+      "registros": 1498,
+      "crs_original": "EPSG:32719",
+      "crs_nombre": "WGS 84 / UTM zone 19S",
+      "codificacion": "UTF-8",
+      "componentes_faltantes": [],
+      "campos": [
+        "ID",
+        "N°_ICH",
+        "NOMBRE_ICH",
+        "DIRECCION",
+        "FICHA_ICH",
+        "FECHA",
+        "FUENTE"
+      ],
+      "geometrias_vacias": 0,
+      "geometrias_invalidas": 0,
+      "geometrias_invalidas_tras_reparar": 0
+    },
     "EJES_VIALES.shp": {
       "archivo": "EJES_VIALES.shp",
       "tipo_geometria": "LineString",
@@ -430,7 +473,7 @@
     {
       "archivo": "predios.geojson",
       "entidades": 32554,
-      "bytes": 11950894
+      "bytes": 14855529
     },
     {
       "archivo": "estaciones_metro.geojson",
@@ -488,13 +531,23 @@
       "bytes": 598745
     },
     {
+      "archivo": "monumentos_historicos.geojson",
+      "entidades": 115,
+      "bytes": 229966
+    },
+    {
+      "archivo": "inmuebles_conservacion_historica.geojson",
+      "entidades": 1498,
+      "bytes": 1330861
+    },
+    {
       "archivo": "etiquetas_ejes_viales.geojson",
       "entidades": 1568,
       "bytes": 284454
     }
   ],
   "carpeta_por_archivo": {
-    "predios_zona_oct_2026.shp": "actualizada",
+    "predios_zona_oct_2026_norma.shp": "actualizada",
     "ESTACIONES_DE_METRO_COMUNA_STGO_2.shp": "actualizada",
     "AI_600m_Estaciones_DS68_Individual.shp": "actualizada",
     "Franjas_Viales_DS68_Troncal_Expresa.shp": "actualizada",
@@ -505,6 +558,8 @@
     "vialidad_comunal_20metros.shp": "actualizada",
     "Manzanas.shp": "actualizada",
     "zci_prcs_wgs84_predios_2.shp": "actualizada",
+    "MONUMENTOS_HISTORICOS_MARZO_2025.shp": "actualizada",
+    "INMUEBLES_DE_CONSERVACION_HISTORICA_MARZO_2025.shp": "actualizada",
     "EJES_VIALES.shp": "actualizada"
   },
   "normas": {
@@ -515,7 +570,7 @@
     }
   },
   "predios": {
-    "archivo": "predios_zona_oct_2026.shp",
+    "archivo": "predios_zona_oct_2026_norma.shp",
     "tipo_geometria": "Polygon",
     "registros": 32554,
     "crs_original": "EPSG:32719",
@@ -533,7 +588,6 @@
       "APORTE_M2",
       "INSIDE_X",
       "INSIDE_Y",
-      "ZONA_2",
       "ZONA_DENS",
       "C_METRO600",
       "C_EXPR200",
@@ -547,24 +601,45 @@
       "P3_ALT50",
       "P4_DEN28",
       "P4_DEN14",
-      "SUP_HA"
+      "SUP_HA",
+      "ZONA_TAB",
+      "NOM_TABLA",
+      "CCV_TXT",
+      "COEF_CVIV",
+      "ALT_TXT",
+      "ALT_MAX_M",
+      "DENSIDAD"
     ],
     "geometrias_vacias": 0,
     "geometrias_invalidas": 0,
     "geometrias_invalidas_tras_reparar": 0,
     "zona": {
-      "reemplazadas_por_ZONA_2": 3577,
-      "sin_zona": 493,
+      "campo": "ZONA_TAB",
+      "sin_zona": 4070,
       "sin_cruce_con_excel": {}
     },
+    "densidad_valores": {
+      "0.0": 2868,
+      "320.0": 215,
+      "640.0": 75,
+      "865.0": 3314,
+      "895.0": 480,
+      "1140.0": 5783,
+      "1230.0": 134,
+      "1600.0": 2976,
+      "1800.0": 718,
+      "2460.0": 22,
+      "2740.0": 443,
+      "nan": 15526
+    },
     "condiciones": {
-      "P1_CA_BASE": 9972,
-      "P2_CON50": 9972,
-      "P2_CON75": 9131,
-      "P3_ALT25": 9972,
-      "P3_ALT50": 6827,
-      "P4_DEN28": 15344,
-      "P4_DEN14": 12348
+      "P1_CA_BASE": 7866,
+      "P2_CON50": 7866,
+      "P2_CON75": 7073,
+      "P3_ALT25": 7866,
+      "P3_ALT50": 5010,
+      "P4_DEN28": 13680,
+      "P4_DEN14": 10743
     },
     "identificador": {
       "campo": "COD_CAT",
@@ -595,6 +670,11 @@
     "6. shp pre reg por zona/3. Coberturas DS68/Franjas_Viales_DS68_Troncal_Expresa.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",
     "6. shp pre reg por zona/3. Coberturas DS68/Franjas_Viales_DS68_Troncal_Expresa.shp": "9d7e9ab2ba4a5ca4bb1cfe2cc48e34a39542fd7a2a3e97e8ba0c3e42cd8b60df",
     "6. shp pre reg por zona/3. Coberturas DS68/Franjas_Viales_DS68_Troncal_Expresa.shx": "5d56a14ff8b7e52a39f42dda84dc4ae5bd79d47472d7fa629956017e80f962f5",
+    "6. shp pre reg por zona/3. Coberturas DS68/INMUEBLES_DE_CONSERVACION_HISTORICA_MARZO_2025.cpg": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+    "6. shp pre reg por zona/3. Coberturas DS68/INMUEBLES_DE_CONSERVACION_HISTORICA_MARZO_2025.dbf": "0340411ea879b20d8132109a9ad45009bfceb168392446adad2eeb561628821c",
+    "6. shp pre reg por zona/3. Coberturas DS68/INMUEBLES_DE_CONSERVACION_HISTORICA_MARZO_2025.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",
+    "6. shp pre reg por zona/3. Coberturas DS68/INMUEBLES_DE_CONSERVACION_HISTORICA_MARZO_2025.shp": "e91036c9f99e2f716543d12b8cbc0a9f6a87d3b6f086dd898b31b0e160a72ca0",
+    "6. shp pre reg por zona/3. Coberturas DS68/INMUEBLES_DE_CONSERVACION_HISTORICA_MARZO_2025.shx": "c4bba315347ce9feb3ecf1fb98d5e5c9010ccb3e72ebfc903c812cea52089efb",
     "6. shp pre reg por zona/3. Coberturas DS68/LIMITE_COMUNA.cpg": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
     "6. shp pre reg por zona/3. Coberturas DS68/LIMITE_COMUNA.dbf": "d1ffe667ed8fa18221e55dec4d06b38b7346c399b2ad50281d89565a87f1d0bd",
     "6. shp pre reg por zona/3. Coberturas DS68/LIMITE_COMUNA.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",
@@ -605,11 +685,16 @@
     "6. shp pre reg por zona/3. Coberturas DS68/Manzanas.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",
     "6. shp pre reg por zona/3. Coberturas DS68/Manzanas.shp": "9a253d036dea9aacd47cb004904df63f726117bc464e87d9c7de949a2da29401",
     "6. shp pre reg por zona/3. Coberturas DS68/Manzanas.shx": "33ee72dbbeb99333641bc5ed08cc37c1a804b317e4488b39837034df4160108e",
-    "6. shp pre reg por zona/3. Coberturas DS68/predios_zona_oct_2026.cpg": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
-    "6. shp pre reg por zona/3. Coberturas DS68/predios_zona_oct_2026.dbf": "39ae3d39684c2281e908d52b623672b47e6774d5eaec1b8bf25edba09592ac7a",
-    "6. shp pre reg por zona/3. Coberturas DS68/predios_zona_oct_2026.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",
-    "6. shp pre reg por zona/3. Coberturas DS68/predios_zona_oct_2026.shp": "d3530267cc0409ba445a4931399ed18377d88424ba33ac778c3418ce4ca4e319",
-    "6. shp pre reg por zona/3. Coberturas DS68/predios_zona_oct_2026.shx": "a4efc1c285870666b03ae4f7a5b27f8adc4a077163e75f58ced609c1c631ab71",
+    "6. shp pre reg por zona/3. Coberturas DS68/MONUMENTOS_HISTORICOS_MARZO_2025.cpg": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+    "6. shp pre reg por zona/3. Coberturas DS68/MONUMENTOS_HISTORICOS_MARZO_2025.dbf": "c715f2c4f7f889c6c86dae152b7a0adb2014f0530f3dc65f285e40db57ea4a4b",
+    "6. shp pre reg por zona/3. Coberturas DS68/MONUMENTOS_HISTORICOS_MARZO_2025.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",
+    "6. shp pre reg por zona/3. Coberturas DS68/MONUMENTOS_HISTORICOS_MARZO_2025.shp": "b8b226dc384b85e21631d883fbe3ba923901669253a5da5f4188b05c858e9da1",
+    "6. shp pre reg por zona/3. Coberturas DS68/MONUMENTOS_HISTORICOS_MARZO_2025.shx": "8fc215fa103229a56cd661d9c6ef32cb7e61fb07514b54c997064816afe83ba2",
+    "6. shp pre reg por zona/3. Coberturas DS68/predios_zona_oct_2026_norma.cpg": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+    "6. shp pre reg por zona/3. Coberturas DS68/predios_zona_oct_2026_norma.dbf": "54240c388ee47462ac226a3963b1aefccd8b9931932fd35c07f7aa833376070b",
+    "6. shp pre reg por zona/3. Coberturas DS68/predios_zona_oct_2026_norma.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",
+    "6. shp pre reg por zona/3. Coberturas DS68/predios_zona_oct_2026_norma.shp": "d3530267cc0409ba445a4931399ed18377d88424ba33ac778c3418ce4ca4e319",
+    "6. shp pre reg por zona/3. Coberturas DS68/predios_zona_oct_2026_norma.shx": "a4efc1c285870666b03ae4f7a5b27f8adc4a077163e75f58ced609c1c631ab71",
     "6. shp pre reg por zona/3. Coberturas DS68/vialidad_comunal_20metros.cpg": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
     "6. shp pre reg por zona/3. Coberturas DS68/vialidad_comunal_20metros.dbf": "bbb4698087f83e83355d90b4b262dbc1bbeb5873957c6c8c53b4da3b29ce3a6b",
     "6. shp pre reg por zona/3. Coberturas DS68/vialidad_comunal_20metros.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",

@@ -34,6 +34,7 @@ export default function App() {
   const [availableFiles, setAvailableFiles] = useState<Set<string> | null | undefined>(undefined);
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const [count, setCount] = useState<number | null>(null);
+  const [valoresClase, setValoresClase] = useState<number[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
@@ -157,12 +158,13 @@ export default function App() {
               ordenes={ordenes}
               normas={normas}
               onCount={setCount}
+              onValoresClase={setValoresClase}
               onLoadingChange={setLoading}
               onLayerUnavailable={markUnavailable}
             />
           )}
           <MapSummary condicion={condicion} predios={count} />
-          <MapLegend condicion={condicion} items={itemsLeyenda} />
+          <MapLegend condicion={condicion} items={itemsLeyenda} valoresClase={valoresClase} />
           <div className="north-arrow" aria-label="Norte">
             <svg viewBox="0 0 24 36" aria-hidden="true">
               <path d="M12 2 L20 26 L12 21 L4 26 Z" fill="#33383d" />

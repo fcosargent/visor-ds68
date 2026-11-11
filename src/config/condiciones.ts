@@ -9,10 +9,8 @@ export interface Ejercicio {
   tipo: TipoEjercicio;
   /** Constructibilidad y altura: se multiplica la norma base del Plan Regulador. */
   multiplicador?: number;
-  /** Densidad: habitantes por vivienda. */
+  /** Densidad: habitantes por vivienda con el DS 68. */
   factor?: number;
-  /** Densidad: factor general, para comparar. */
-  factorComparacion?: number;
 }
 
 export interface Condicion {
@@ -33,11 +31,21 @@ export interface Plano {
   condiciones: Condicion[];
 }
 
+/** Colores por valor único de un atributo del predio (densidad en P4). */
+export interface Clasificacion {
+  titulo: string;
+  unidad: string;
+  clases: { valor: number; color: string }[];
+  /** Valor 0 o vacío. */
+  sinValor: { color: string; etiqueta: string };
+}
+
 export interface Simbologia {
   relleno: string;
   contorno: string;
   grosor: number;
   opacidadRelleno: number;
+  clasificacion?: Clasificacion;
 }
 
 export interface Grupo {
@@ -52,7 +60,11 @@ export interface Grupo {
 interface Configuracion {
   totalManzanas: number;
   grupos: Grupo[];
-  ejercicio: { metrosPorPiso: number; nota: string };
+  ejercicio: {
+    metrosPorPiso: number;
+    nota: string;
+    densidad: { factorAnterior: number; incrementoSuperficieBruta: number; rotulo: string };
+  };
   textos: Record<'resumenManzanas' | 'noAplica' | 'sinValorNumerico' | 'zonaNoInformada' | 'sinNormas', string>;
 }
 
@@ -69,3 +81,11 @@ export const CONDICIONES: CondicionActiva[] = CONFIG.grupos.flatMap((grupo) =>
 );
 
 export const condicionPorCampo = (campo: string) => CONDICIONES.find((c) => c.campo === campo) ?? CONDICIONES[0];
+
+/** Color de relleno de un predio según la simbología de su grupo (por clase de densidad si corresponde). */
+export function colorRelleno(s: Simbologia, valor: number | null | undefined): string {
+  const cl = s.clasificacion;
+  if (!cl) return s.relleno;
+  if (!valor) return cl.sinValor.color;
+  return cl.clases.find((c) => c.valor === valor)?.color ?? cl.sinValor.color;
+}

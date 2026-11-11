@@ -47,14 +47,37 @@ SALIDA = APP_DIR / "public" / "data"
 CRS_ESPERADO = 32719  # WGS 84 / UTM 19S
 CRS_SALIDA = 4326
 
-# Predios con las 7 condiciones (nombres físicos verificados en predios_zona_oct_2026.dbf).
-ARCHIVO_PREDIOS = "predios_zona_oct_2026.shp"
+# Predios con las 7 condiciones y las normas ya cruzadas con la tabla del Plan Regulador
+# (nombres físicos verificados en predios_zona_oct_2026_norma.dbf). Es el dato oficial
+# para los cálculos del visor.
+ARCHIVO_PREDIOS = "predios_zona_oct_2026_norma.shp"
 CAMPO_ID_PREDIO = "COD_CAT"  # código catastral; no hay campo de rol ni manzana-predio
-CAMPO_ZONA = "ZONA"
-CAMPO_ZONA_RESPALDO = "ZONA_2"  # se usa cuando ZONA viene como «0»
-ZONAS_SIN_DATO = {"0", "0I"}
+CAMPO_ZONA = "ZONA_TAB"  # código de zona de la tabla de normas (ej. «B oriente», «A5R»)
+CAMPO_NOMBRE_ZONA = "NOM_TABLA"  # encabezado del Excel (ej. «SE B2a»)
+# Normas por predio: campo -> clave en el GeoJSON.
+CAMPOS_NORMA = {
+    "CCV_TXT": "cvt",  # coeficiente de constructibilidad (vivienda), texto original
+    "COEF_CVIV": "cv",  # idem, valor numérico
+    "ALT_TXT": "alt",  # altura máxima, texto original
+    "ALT_MAX_M": "al",  # idem, valor numérico en metros
+    "DENSIDAD": "d",  # densidad máxima (hab/há)
+}
 CAMPOS_CONDICION = ["P1_CA_BASE", "P2_CON50", "P2_CON75", "P3_ALT25", "P3_ALT50", "P4_DEN28", "P4_DEN14"]
 DECIMALES_PREDIOS = 6  # ~10 cm; no se simplifican los límites prediales
+
+# Siglas del Plan Regulador que se desarrollan en el nombre de la zona.
+SIGLAS_ZONA = {
+    "ZONA": "Zona",
+    "SUBZONA": "Subzona",
+    "ZCH": "Zona de Conservación Histórica",
+    "SE": "Sector Especial",
+}
+
+# Monumentos Históricos e Inmuebles de Conservación Histórica: se conservan todos los campos.
+CAPAS_PATRIMONIO = {
+    "MONUMENTOS_HISTORICOS_MARZO_2025.shp": "monumentos_historicos.geojson",
+    "INMUEBLES_DE_CONSERVACION_HISTORICA_MARZO_2025.shp": "inmuebles_conservacion_historica.geojson",
+}
 
 # Equivalencias entre ZONA (normalizada) y las columnas del Excel (normalizadas).
 # Además de estas, «Xi» se asigna a «SUBZONA XR» cuando existe en el Excel.
@@ -367,6 +390,33 @@ def claves_normas(zona: str | None, zonas_excel: dict) -> list[str]:
     return []
 
 
+def desarrollar_nombre_zona(nombre) -> str | None:
+    """«SE B2a» -> «Sector Especial B2a»; «ZCH D7» -> «Zona de Conservación Histórica D7»."""
+    if nombre is None or (isinstance(nombre, float) and math.isnan(nombre)):
+        return None
+    s = re.sub(r"\s+", " ", str(nombre)).strip()
+    sigla, _, resto = s.partition(" ")
+    return f"{SIGLAS_ZONA[sigla.upper()]} {resto}" if sigla.upper() in SIGLAS_ZONA and resto else s
+
+
+def procesar_patrimonio(origen: Path, archivo: str, informe: dict) -> list[dict]:
+    """MH e ICH: se conservan todos los campos (el visor les asigna alias legibles)."""
+    ruta = origen / archivo
+    print(f"\n[patrimonio] {ruta.name}")
+    gdf, rep = leer(ruta)
+    informe["capas"][ruta.name] = rep
+    for col in gdf.columns:
+        if col == "geometry":
+            continue
+        serie = gdf[col]
+        # Códigos guardados como decimales (ID, N°_ICH) se publican como enteros.
+        if pd.api.types.is_float_dtype(serie) and serie.dropna().apply(float.is_integer).all():
+            gdf[col] = serie.astype("Int64")
+        elif serie.dtype == object or pd.api.types.is_string_dtype(serie):
+            gdf[col] = serie.map(lambda v: re.sub(r"\s+", " ", v).strip() if isinstance(v, str) else v)
+    return [exportar(gdf, CAPAS_PATRIMONIO[archivo])]
+
+
 def _redondear(geoms: np.ndarray, decimales: int) -> np.ndarray:
     return shapely.transform(geoms, lambda xy: np.round(xy, decimales))
 
@@ -376,27 +426,28 @@ def procesar_predios(origen: Path, informe: dict, zonas_excel: dict) -> list[dic
     print(f"\n[predios] {ruta.name}")
     gdf, rep = leer(ruta)
 
-    requeridos = [CAMPO_ID_PREDIO, CAMPO_ZONA, CAMPO_ZONA_RESPALDO, *CAMPOS_CONDICION]
+    requeridos = [CAMPO_ID_PREDIO, CAMPO_ZONA, CAMPO_NOMBRE_ZONA, *CAMPOS_NORMA, *CAMPOS_CONDICION]
     faltan = [c for c in requeridos if c not in gdf.columns]
     if faltan:
         raise ErrorCampos(
             f"No se encontraron los campos {faltan} en {ruta.name}.\n"
             f"Campos encontrados: {rep['campos']}\n"
-            "Corrija las constantes CAMPO_* / CAMPOS_CONDICION al inicio de scripts/prepare_data.py."
+            "Corrija las constantes CAMPO_* / CAMPOS_NORMA / CAMPOS_CONDICION al inicio de scripts/prepare_data.py."
         )
 
-    # Zona mostrada: ZONA, o ZONA_2 cuando ZONA viene como «0».
     zona = gdf[CAMPO_ZONA].astype("string").str.strip()
-    usar_respaldo = zona.isna() | zona.str.upper().isin(ZONAS_SIN_DATO)
-    zona = zona.where(~usar_respaldo, gdf[CAMPO_ZONA_RESPALDO].astype("string").str.strip())
     zona = zona.where(zona.notna() & (zona != ""), None)
+    nombre_zona = [desarrollar_nombre_zona(v) for v in gdf[CAMPO_NOMBRE_ZONA]]
     claves = zona.map(lambda z: "|".join(claves_normas(z, zonas_excel)) if isinstance(z, str) else "")
 
     sin_cruce = zona[zona.notna() & (claves == "")].value_counts()
     rep["zona"] = {
-        "reemplazadas_por_ZONA_2": int((usar_respaldo & zona.notna()).sum()),
+        "campo": CAMPO_ZONA,
         "sin_zona": int(zona.isna().sum()),
         "sin_cruce_con_excel": {str(k): int(v) for k, v in sin_cruce.items()},
+    }
+    rep["densidad_valores"] = {
+        str(k): int(v) for k, v in gdf["DENSIDAD"].value_counts(dropna=False).sort_index().items()
     }
 
     condiciones = {c: es_si(gdf[c]) for c in CAMPOS_CONDICION}
@@ -414,24 +465,36 @@ def procesar_predios(origen: Path, informe: dict, zonas_excel: dict) -> list[dic
     }
     informe["predios"] = rep
 
-    # GeoJSON compacto: c = código catastral, z = zona, k = columnas del Excel,
-    # s = superficie del trozo en m², cond = condiciones que cumple.
+    # GeoJSON compacto: c = código catastral, z = zona (ZONA_TAB), n = nombre de la zona,
+    # k = columnas del Excel, s = superficie del predio en m² (SUP_HA × 10.000),
+    # cvt/cv, alt/al, d = normas del predio (ver CAMPOS_NORMA), cond = condiciones que cumple.
     geoms = _redondear(gdf.to_crs(CRS_SALIDA).geometry.values, DECIMALES_PREDIOS)
-    area = gdf.geometry.area.round(1)
+    area = (gdf["SUP_HA"] * 10000).round(1) if "SUP_HA" in gdf.columns else gdf.geometry.area.round(1)
+    # Listas de Python (no Series): así los vacíos quedan como null y no como NaN, que no es JSON válido.
+    normas = {
+        clave: [
+            None if pd.isna(v) else (re.sub(r"\s+", " ", v).strip() if isinstance(v, str) else float(v))
+            for v in gdf[campo]
+        ]
+        for campo, clave in CAMPOS_NORMA.items()
+    }
     features = []
     for i, geom in enumerate(geoms):
         props = {
             "c": None if pd.isna(ident.iat[i]) else ident.iat[i],
             "z": None if pd.isna(zona.iat[i]) else zona.iat[i],
+            "n": nombre_zona[i],
             "k": claves.iat[i],
             "s": float(area.iat[i]),
+            **{clave: valores[i] for clave, valores in normas.items()},
             "cond": [c for c in CAMPOS_CONDICION if condiciones[c].iat[i]],
         }
         features.append({"type": "Feature", "properties": props, "geometry": shapely.geometry.mapping(geom)})
 
     destino = SALIDA / "predios.geojson"
     with destino.open("w", encoding="utf-8") as f:
-        json.dump({"type": "FeatureCollection", "features": features}, f, ensure_ascii=False, separators=(",", ":"))
+        json.dump({"type": "FeatureCollection", "features": features}, f, ensure_ascii=False, separators=(",", ":"),
+                  allow_nan=False)
     tam = destino.stat().st_size
     print(f"  -> predios.geojson: {len(features):,} entidades; {tam / 1e6:,.1f} MB".replace(",", "."))
     return [{"archivo": "predios.geojson", "entidades": len(features), "bytes": int(tam)}]
@@ -618,6 +681,7 @@ def main() -> int:
         (ARCHIVO_AI_METRO, procesar_influencia_metro, False),
         *[(a, lambda o, i, a=a: procesar_auxiliar(o, a, i), False) for a in CAPAS_AUXILIARES],
         (incentivo, lambda o, i: procesar_incentivo(o, incentivo, i), False),
+        *[(a, lambda o, i, a=a: procesar_patrimonio(o, a, i), False) for a in CAPAS_PATRIMONIO],
         (ARCHIVO_EJES, procesar_etiquetas_ejes, False),
     ]
 

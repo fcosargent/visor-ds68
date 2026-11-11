@@ -4,11 +4,11 @@ import 'leaflet/dist/leaflet.css';
 import type { Feature, FeatureCollection } from 'geojson';
 import { PREDIOS_URL, type LayerConfig } from '../config/layers';
 import { METADATA } from '../config/metadata';
-import type { CondicionActiva } from '../config/condiciones';
+import { colorRelleno, type CondicionActiva } from '../config/condiciones';
 import { agregarMapaBase } from '../lib/basemap';
 import { loadGeoJSON } from '../lib/data';
 import type { NormasData, PredioProps } from '../lib/normas';
-import { predioPopup } from '../lib/popup';
+import { fichaPopup, predioPopup } from '../lib/popup';
 import { StreetLabelLayer } from '../lib/streetLabels';
 import { ID_CONDICION } from './LayerPanel';
 
@@ -19,6 +19,8 @@ interface Props {
   ordenes: Record<string, number>;
   normas: NormasData | null;
   onCount: (n: number | null) => void;
+  /** Valores de densidad presentes en la condición activa (para la leyenda); null si no aplica. */
+  onValoresClase: (valores: number[] | null) => void;
   onLoadingChange: (loading: boolean) => void;
   onLayerUnavailable: (id: string) => void;
 }
@@ -39,7 +41,7 @@ function buildLayer(config: LayerConfig, data: FeatureCollection, renderer: L.Re
   const filter = config.filter
     ? (f: Feature) => String(f.properties?.[config.filter!.property] ?? '') === config.filter!.value
     : undefined;
-  const interactive = Boolean(config.tooltip);
+  const interactive = Boolean(config.tooltip || config.ficha);
 
   return L.geoJSON(data, {
     filter,
@@ -48,7 +50,10 @@ function buildLayer(config: LayerConfig, data: FeatureCollection, renderer: L.Re
       L.circleMarker(latlng, { ...style, radius: style.radius ?? 5, renderer, interactive }),
     onEachFeature: (feature, layer) => {
       const props = (feature.properties ?? {}) as Record<string, unknown>;
-      if (config.tooltip) {
+      if (config.ficha) {
+        const ficha = config.ficha;
+        layer.bindPopup(() => fichaPopup(ficha, props), { maxWidth: 340, minWidth: 280 });
+      } else if (config.tooltip) {
         layer.bindTooltip(escapeHtml(config.tooltip(props)), { direction: 'top', offset: [0, -4] });
       }
     },
@@ -65,11 +70,11 @@ function buildCondicionLayer(
   const s = condicion.grupo.simbologia;
   return L.geoJSON(data, {
     filter: (f) => ((f.properties as PredioProps | null)?.cond ?? []).includes(condicion.campo),
-    style: () => ({
+    style: (f) => ({
       renderer,
       color: s.contorno,
       weight: s.grosor,
-      fillColor: s.relleno,
+      fillColor: colorRelleno(s, (f?.properties as PredioProps | undefined)?.d),
       fillOpacity: s.opacidadRelleno,
     }),
     onEachFeature: (feature, layer) => {
@@ -87,6 +92,7 @@ export default function MapView({
   ordenes,
   normas,
   onCount,
+  onValoresClase,
   onLoadingChange,
   onLayerUnavailable,
 }: Props) {
@@ -104,8 +110,8 @@ export default function MapView({
   ordenesRef.current = ordenes;
 
   // Callbacks en refs para no reiniciar efectos cuando cambian.
-  const cb = useRef({ onCount, onLoadingChange, onLayerUnavailable });
-  cb.current = { onCount, onLoadingChange, onLayerUnavailable };
+  const cb = useRef({ onCount, onValoresClase, onLoadingChange, onLayerUnavailable });
+  cb.current = { onCount, onValoresClase, onLoadingChange, onLayerUnavailable };
 
   const track = <T,>(p: Promise<T>) => {
     pendingRef.current += 1;
@@ -144,6 +150,8 @@ export default function MapView({
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map);
     rendererRef.current = L.canvas({ padding: 0.5, tolerance: 3 });
     mapRef.current = map;
+    // Solo en desarrollo: acceso al mapa desde la consola para pruebas (no se incluye en la publicación).
+    if (import.meta.env.DEV) (window as unknown as { __mapa: L.Map }).__mapa = map;
     return () => {
       map.remove();
       mapRef.current = null;
@@ -170,7 +178,13 @@ export default function MapView({
         const layer = buildCondicionLayer(condicion, data, rendererRef.current!, () => normasRef.current).addTo(map);
         condicionRef.current = { id: ID_CONDICION, layer };
         reorder();
-        cb.current.onCount(layer.getLayers().length);
+        const predios = layer.getLayers() as L.Path[];
+        cb.current.onCount(predios.length);
+        cb.current.onValoresClase(
+          condicion.grupo.simbologia.clasificacion
+            ? [...new Set(predios.map((p) => ((p as L.Polygon).feature?.properties as PredioProps).d ?? 0))].sort((a, b) => a - b)
+            : null,
+        );
         if (firstFitRef.current) {
           const bounds = layer.getBounds();
           if (bounds.isValid()) map.fitBounds(bounds, { padding: [16, 16] });

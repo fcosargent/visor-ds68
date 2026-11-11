@@ -1,5 +1,6 @@
 // Normas de edificación por zona (normas_zonas.json) y ejercicio referencial del popup.
-// Los porcentajes y factores vienen de condiciones.json; aquí solo se calcula.
+// Los valores para calcular vienen de cada predio (predios_zona_oct_2026_norma, dato oficial);
+// del Excel solo se toman los valores con incentivo. Multiplicadores y factores: condiciones.json.
 
 import { NORMAS_URL } from '../config/layers';
 import { CONFIG, type CondicionActiva } from '../config/condiciones';
@@ -22,12 +23,22 @@ export interface NormasData {
 export interface PredioProps {
   /** Código catastral. */
   c: string | null;
-  /** Zona del Plan Regulador (ZONA, o ZONA_2 cuando ZONA venía como «0»). */
+  /** Código de zona del Plan Regulador (ZONA_TAB). */
   z: string | null;
+  /** Nombre de la zona (NOM_TABLA con la sigla desarrollada). */
+  n: string | null;
   /** Columnas del Excel asociadas a la zona, separadas por «|». */
   k: string;
-  /** Superficie del predio dentro de la zona, en m². */
+  /** Superficie del predio, en m². */
   s: number;
+  /** Coeficiente de constructibilidad (vivienda): texto original y valor. */
+  cvt: string | null;
+  cv: number | null;
+  /** Altura máxima: texto original y valor en metros. */
+  alt: string | null;
+  al: number | null;
+  /** Densidad máxima (hab/há). */
+  d: number | null;
   /** Condiciones que cumple el predio (nombres de campo P*). */
   cond: string[];
 }
@@ -54,9 +65,15 @@ const fmt = (n: number, decimales = 1) =>
   new Intl.NumberFormat('es-CL', { maximumFractionDigits: decimales }).format(n);
 export const formatearNumero = fmt;
 
+/** Texto original de la norma; si es solo un número («3.6»), se muestra con coma decimal. */
+export const textoNumerico = (texto: string | null | undefined): string | null => {
+  if (!texto) return null;
+  return /^\d+(\.\d+)?$/.test(texto) ? fmt(Number(texto), 2) : texto;
+};
+
 /**
- * Texto de una norma para el popup. Si la zona corresponde a dos columnas del Excel
- * con valores distintos (p. ej. zona B oriente/poniente), se muestran ambos rotulados.
+ * Texto de una norma del Excel para el popup. Si la zona corresponde a dos columnas
+ * con valores distintos, se muestran ambos rotulados.
  */
 export function textoNorma(zonas: ZonaNormas[], clave: ClaveNorma): string {
   const noAplica = CONFIG.textos.noAplica;
@@ -66,36 +83,26 @@ export function textoNorma(zonas: ZonaNormas[], clave: ClaveNorma): string {
   return zonas.map((z, i) => `${z.nombre}: ${textos[i]}`).join(' · ');
 }
 
-/** Valor numérico común a todas las columnas de la zona; null si falta o difiere. */
-function valorComun(zonas: ZonaNormas[], clave: ClaveNorma): number | null {
-  const valores = zonas.map((z) => z[clave].valor);
-  if (valores.length === 0 || valores.some((v) => v == null)) return null;
-  return new Set(valores).size === 1 ? valores[0] : null;
-}
-
 export interface FilaEjercicio {
   etiqueta: string;
   valor: string;
   destacado?: boolean;
 }
 
-/** Ejercicio referencial según la condición activa. Devuelve filas o un mensaje. */
-export function calcularEjercicio(
-  props: PredioProps,
-  zonas: ZonaNormas[],
-  condicion: CondicionActiva,
-): { filas: FilaEjercicio[] } | { mensaje: string } | null {
+export type ResultadoEjercicio = { titulo?: string; filas: FilaEjercicio[] } | { titulo?: string; mensaje: string } | null;
+
+/** Ejercicio referencial según la condición activa, con los valores oficiales del predio. */
+export function calcularEjercicio(props: PredioProps, condicion: CondicionActiva): ResultadoEjercicio {
   const ej = condicion.ejercicio;
   if (!ej) return null;
-  if (zonas.length === 0) return { mensaje: CONFIG.textos.sinNormas };
 
   const superficie = props.s;
-  const filaSuperficie = { etiqueta: 'Superficie del predio en esta zona', valor: `${fmt(superficie, 0)} m²` };
-  const pct = (m: number) => `+${fmt((m - 1) * 100, 0)}%`;
+  const filaSuperficie = { etiqueta: 'Superficie del predio', valor: `${fmt(superficie, 0)} m²` };
+  const pct = (m: number) => `+${fmt((m - 1) * 100, 1)}%`;
 
   if (ej.tipo === 'constructibilidad' && ej.multiplicador) {
-    const coef = valorComun(zonas, 'constr_viv');
-    if (coef == null) return { mensaje: CONFIG.textos.sinValorNumerico };
+    const coef = props.cv;
+    if (!coef) return { mensaje: CONFIG.textos.sinValorNumerico };
     const actual = superficie * coef;
     const nueva = actual * ej.multiplicador;
     return {
@@ -110,8 +117,8 @@ export function calcularEjercicio(
   }
 
   if (ej.tipo === 'altura' && ej.multiplicador) {
-    const altura = valorComun(zonas, 'altura');
-    if (altura == null) return { mensaje: CONFIG.textos.sinValorNumerico };
+    const altura = props.al;
+    if (!altura) return { mensaje: CONFIG.textos.sinValorNumerico };
     const nueva = altura * ej.multiplicador;
     const dif = nueva - altura;
     const pisos = Math.round(dif / CONFIG.ejercicio.metrosPorPiso);
@@ -129,20 +136,30 @@ export function calcularEjercicio(
   }
 
   if (ej.tipo === 'densidad' && ej.factor) {
-    const densidad = valorComun(zonas, 'densidad');
-    if (densidad == null) return { mensaje: CONFIG.textos.sinValorNumerico };
-    const viviendas = (factor: number) => Math.floor((densidad * (superficie / 10000)) / factor);
-    const filas: FilaEjercicio[] = [
-      filaSuperficie,
-      { etiqueta: 'Densidad del Plan Regulador', valor: `${fmt(densidad, 0)} hab/ha` },
-      { etiqueta: `Máximo de viviendas con factor ${fmt(ej.factor)}`, valor: fmt(viviendas(ej.factor), 0), destacado: true },
-    ];
-    if (ej.factorComparacion) {
-      const base = viviendas(ej.factorComparacion);
-      filas.push({ etiqueta: `Con el factor general ${fmt(ej.factorComparacion)}`, valor: fmt(base, 0) });
-      filas.push({ etiqueta: 'Diferencia', valor: `+${fmt(viviendas(ej.factor) - base, 0)} viviendas` });
-    }
-    return { filas };
+    const cfg = CONFIG.ejercicio.densidad;
+    const densidad = props.d;
+    if (!densidad) return { titulo: cfg.rotulo, mensaje: CONFIG.textos.noAplica };
+    const bruta = superficie * (1 + cfg.incrementoSuperficieBruta);
+    const brutaHa = bruta / 10000;
+    const antes = Math.floor((densidad * brutaHa) / cfg.factorAnterior);
+    const ahora = Math.floor((densidad * brutaHa) / ej.factor);
+    // El porcentaje es el de la norma (factor anterior ÷ factor actual), no el de las cifras redondeadas.
+    const variacion = (cfg.factorAnterior / ej.factor - 1) * 100;
+    return {
+      titulo: cfg.rotulo,
+      filas: [
+        filaSuperficie,
+        { etiqueta: 'Superficie bruta estimada (+30%)', valor: `${fmt(bruta, 0)} m² (${fmt(brutaHa, 4)} há)` },
+        { etiqueta: 'Densidad máxima del Plan Regulador', valor: `${fmt(densidad, 0)} hab/há` },
+        { etiqueta: `Viviendas antes del DS 68 (÷ ${fmt(cfg.factorAnterior)})`, valor: fmt(antes, 0) },
+        { etiqueta: `Viviendas con el DS 68 (÷ ${fmt(ej.factor)})`, valor: fmt(ahora, 0) },
+        {
+          etiqueta: 'Variación',
+          valor: `+${fmt(ahora - antes, 0)} viviendas (+${fmt(variacion, 1)}%)`,
+          destacado: true,
+        },
+      ],
+    };
   }
   return null;
 }

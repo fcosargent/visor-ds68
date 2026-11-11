@@ -5,8 +5,17 @@
       "id": "conjunto_armonico",
       "titulo": "Conjunto Armónico",
       "introduccion": "El Conjunto armónico corresponde a una norma de excepción, a la que se pueden acoger los proyectos inmobiliarios, siempre y cuando cumplan con condiciones de dimensión o localización y ampliación. La condición de un proyecto como conjunto armónico los habilita para aumentar la altura máxima de edificación y la constructibilidad por sobre las normas establecidas por el PRC.",
-      "recuadro": { "fondo": "#FFF1EE", "borde": "#F2B3A6", "acento": "#D9534F" },
-      "simbologia": { "relleno": "#FF7F7F", "contorno": "#6E6E6E", "grosor": 0.7, "opacidadRelleno": 0.85 },
+      "recuadro": {
+        "fondo": "#FFF1EE",
+        "borde": "#F2B3A6",
+        "acento": "#D9534F"
+      },
+      "simbologia": {
+        "relleno": "#FF7F7F",
+        "contorno": "#6E6E6E",
+        "grosor": 0.4,
+        "opacidadRelleno": 0.85
+      },
       "planos": [
         {
           "id": "P1",
@@ -17,8 +26,8 @@
               "campo": "P1_CA_BASE",
               "nombre": "Situación base (art. 2.6.4)",
               "variante": "Situación base",
-              "manzanas": 887,
-              "porcentaje": 61.6,
+              "manzanas": 880,
+              "porcentaje": 61.1,
               "texto": "Predios que enfrentan una calle de al menos 20 metros de ancho (existente o proyectada) y que podrían acogerse a Conjunto Armónico. Se excluyen las zonas donde no se permite vivienda, las zonas con incentivo normativo de plan regulador vigente, las áreas verdes públicas y privadas existentes, estaciones de metro y los estacionamientos subterráneos.",
               "resumen": "Puede acogerse a Conjunto Armónico por enfrentar una calle de 20 m o más.",
               "ejercicio": null
@@ -34,21 +43,27 @@
               "campo": "P2_CON50",
               "nombre": "Más superficie construida: +50% (art. 2.6.7)",
               "variante": "+50%",
-              "manzanas": 887,
-              "porcentaje": 61.6,
+              "manzanas": 880,
+              "porcentaje": 61.1,
               "texto": "Estos predios pueden construir hasta un 50% más de superficie que lo permitido por el Plan Regulador, solo por cumplir la condición base.",
               "resumen": "Hasta 50% más de superficie construida.",
-              "ejercicio": { "tipo": "constructibilidad", "multiplicador": 1.5 }
+              "ejercicio": {
+                "tipo": "constructibilidad",
+                "multiplicador": 1.5
+              }
             },
             {
               "campo": "P2_CON75",
               "nombre": "Más superficie construida: +75% (art. 2.6.7)",
               "variante": "+75%",
-              "manzanas": 826,
-              "porcentaje": 57.3,
+              "manzanas": 819,
+              "porcentaje": 56.8,
               "texto": "Estos predios pueden construir hasta un 75% más si el proyecto tiene viviendas de hasta 90 m² y está cerca del transporte público: a menos de 600 m caminando de una estación de metro, a 200 m del acceso a una autopista urbana (vía expresa) o a 100 m de una avenida principal (vía troncal).",
               "resumen": "Hasta 75% más de superficie construida, con viviendas de hasta 90 m² y cerca del transporte público.",
-              "ejercicio": { "tipo": "constructibilidad", "multiplicador": 1.75 }
+              "ejercicio": {
+                "tipo": "constructibilidad",
+                "multiplicador": 1.75
+              }
             }
           ]
         },
@@ -61,21 +76,27 @@
               "campo": "P3_ALT25",
               "nombre": "Más altura: +25% (art. 2.6.9)",
               "variante": "+25%",
-              "manzanas": 887,
-              "porcentaje": 61.6,
+              "manzanas": 880,
+              "porcentaje": 61.1,
               "texto": "Estos predios pueden construir edificios hasta un 25% más altos que lo permitido por el Plan Regulador, solo por cumplir la condición base.",
               "resumen": "Edificios hasta 25% más altos.",
-              "ejercicio": { "tipo": "altura", "multiplicador": 1.25 }
+              "ejercicio": {
+                "tipo": "altura",
+                "multiplicador": 1.25
+              }
             },
             {
               "campo": "P3_ALT50",
               "nombre": "Más altura: +50% (art. 2.6.9)",
               "variante": "+50%",
-              "manzanas": 713,
-              "porcentaje": 49.5,
+              "manzanas": 703,
+              "porcentaje": 48.8,
               "texto": "Estos predios pueden construir edificios hasta un 50% más altos si el proyecto tiene viviendas de hasta 90 m² y el predio enfrenta una autopista urbana (vía expresa) o una avenida principal (vía troncal).",
               "resumen": "Edificios hasta 50% más altos, con viviendas de hasta 90 m² y frente a una vía expresa o troncal.",
-              "ejercicio": { "tipo": "altura", "multiplicador": 1.5 }
+              "ejercicio": {
+                "tipo": "altura",
+                "multiplicador": 1.5
+              }
             }
           ]
         }
@@ -85,8 +106,67 @@
       "id": "densidad",
       "titulo": "Densidad",
       "introduccion": "La densidad limita cuántas viviendas se pueden construir en un terreno. El DS 68 cambia la forma de calcularla en las zonas donde el Plan Regulador la fija.",
-      "recuadro": { "fondo": "#EDF7FD", "borde": "#A9D6F0", "acento": "#2F86B8" },
-      "simbologia": { "relleno": "#6EC6F0", "contorno": "#6E6E6E", "grosor": 0.7, "opacidadRelleno": 0.85 },
+      "recuadro": {
+        "fondo": "#EDF7FD",
+        "borde": "#A9D6F0",
+        "acento": "#2F86B8"
+      },
+      "simbologia": {
+        "relleno": "#6EC6F0",
+        "contorno": "#6E6E6E",
+        "grosor": 0.4,
+        "opacidadRelleno": 0.85,
+        "clasificacion": {
+          "titulo": "Densidad máxima del Plan Regulador",
+          "unidad": "hab/há",
+          "clases": [
+            {
+              "valor": 320,
+              "color": "#deebf7"
+            },
+            {
+              "valor": 640,
+              "color": "#c6dbef"
+            },
+            {
+              "valor": 865,
+              "color": "#9ecae1"
+            },
+            {
+              "valor": 895,
+              "color": "#6baed6"
+            },
+            {
+              "valor": 1140,
+              "color": "#4292c6"
+            },
+            {
+              "valor": 1230,
+              "color": "#2171b5"
+            },
+            {
+              "valor": 1600,
+              "color": "#08519c"
+            },
+            {
+              "valor": 1800,
+              "color": "#08306b"
+            },
+            {
+              "valor": 2460,
+              "color": "#061d45"
+            },
+            {
+              "valor": 2740,
+              "color": "#030f26"
+            }
+          ],
+          "sinValor": {
+            "color": "#d9d9d9",
+            "etiqueta": "Sin densidad máxima definida"
+          }
+        }
+      },
       "planos": [
         {
           "id": "P4",
@@ -101,7 +181,10 @@
               "porcentaje": 42.7,
               "texto": "Predios en zonas con densidad regulada. Para calcular el máximo de viviendas se usa el factor 2,8, que se aplica en general sin condiciones especiales.",
               "resumen": "El máximo de viviendas se calcula con el factor 2,8 (habitantes por vivienda).",
-              "ejercicio": { "tipo": "densidad", "factor": 2.8 }
+              "ejercicio": {
+                "tipo": "densidad",
+                "factor": 2.8
+              }
             },
             {
               "campo": "P4_DEN14",
@@ -111,7 +194,10 @@
               "porcentaje": 38.0,
               "texto": "Predios en zonas con densidad regulada y cercanos al transporte público (a menos de 600 m caminando de metro, a 200 m del acceso a una vía expresa o a 100 m de una vía troncal). Aquí se usa el factor 1,4, que permite más viviendas en el mismo terreno.",
               "resumen": "El máximo de viviendas se calcula con el factor 1,4 (habitantes por vivienda), que permite más viviendas.",
-              "ejercicio": { "tipo": "densidad", "factor": 1.4, "factorComparacion": 2.8 }
+              "ejercicio": {
+                "tipo": "densidad",
+                "factor": 1.4
+              }
             }
           ]
         }
@@ -120,7 +206,12 @@
   ],
   "ejercicio": {
     "metrosPorPiso": 2.5,
-    "nota": "Cálculo referencial y simplificado. No constituye certificado ni reemplaza el análisis normativo."
+    "nota": "Cálculo referencial y simplificado. No constituye certificado ni reemplaza el análisis normativo.",
+    "densidad": {
+      "factorAnterior": 4,
+      "incrementoSuperficieBruta": 0.3,
+      "rotulo": "Ejercicio referencial: superficie bruta estimada en +30% de la superficie del predio"
+    }
   },
   "textos": {
     "resumenManzanas": "de las {total} de la comuna tienen al menos un predio habilitado",
