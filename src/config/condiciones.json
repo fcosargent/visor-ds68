@@ -99,6 +99,33 @@
               }
             }
           ]
+        },
+        {
+          "id": "P5",
+          "titulo": "Más superficie y más altura",
+          "articulo": "arts. 2.6.7 y 2.6.9",
+          "condiciones": [
+            {
+              "campo": "P5_C75A50",
+              "nombre": "Superficie +75% y altura +50% (arts. 2.6.7 y 2.6.9)",
+              "variante": "Superficie +75% y altura +50%",
+              "manzanas": 703,
+              "porcentaje": 48.8,
+              "relleno": "#D6404A",
+              "texto": "Predios cercanos a transporte público y a vías expresas o troncales, que pueden sumar ambos incentivos: hasta 75% más de superficie construida y hasta 50% más de altura, con viviendas de hasta 90 m².",
+              "resumen": "Accede a ambos beneficios a la vez: hasta 75% más de superficie construida y hasta 50% más de altura.",
+              "ejercicio": [
+                {
+                  "tipo": "constructibilidad",
+                  "multiplicador": 1.75
+                },
+                {
+                  "tipo": "altura",
+                  "multiplicador": 1.5
+                }
+              ]
+            }
+          ]
         }
       ]
     },

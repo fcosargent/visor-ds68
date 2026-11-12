@@ -33,7 +33,7 @@ export default function MapLegend({ condicion, items, valoresClase }: Props) {
       <ul>
         {(valoresClase ?? cl.clases.map((c) => c.valor)).map((v) => (
           <li key={v}>
-            <Swatch layer={swatchPoligono(colorRelleno(s, v), s.contorno, s.opacidadRelleno)} />
+            <Swatch layer={swatchPoligono(colorRelleno(condicion, v), s.contorno, s.opacidadRelleno)} />
             <span>{v ? formatNumber(v) : cl.sinValor.etiqueta}</span>
           </li>
         ))}
@@ -41,7 +41,7 @@ export default function MapLegend({ condicion, items, valoresClase }: Props) {
     </li>
   ) : (
     <li key="condicion" className="legend-main">
-      <Swatch layer={swatchPoligono(s.relleno, s.contorno, s.opacidadRelleno)} />
+      <Swatch layer={swatchPoligono(colorRelleno(condicion), s.contorno, s.opacidadRelleno)} />
       <span>{condicion.nombre}</span>
     </li>
   );

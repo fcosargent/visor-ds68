@@ -7,7 +7,7 @@ Visor cartográfico de los escenarios que genera el Decreto Supremo N.° 68 del 
 
 ## Qué muestra
 
-Siete condiciones, organizadas en dos grupos. Se ve una condición a la vez.
+Ocho condiciones, organizadas en dos grupos. Se ve una condición a la vez.
 
 | Grupo | Plano | Campo | Nombre visible | Predios | Manzanas | % |
 |---|---|---|---|---|---|---|
@@ -16,14 +16,16 @@ Siete condiciones, organizadas en dos grupos. Se ve una condición a la vez.
 | Conjunto Armónico | 2 | `P2_CON75` | Más superficie construida: +75% (art. 2.6.7) | 7.073 | 819 | 56,8 % |
 | Conjunto Armónico | 3 | `P3_ALT25` | Más altura: +25% (art. 2.6.9) | 7.866 | 880 | 61,1 % |
 | Conjunto Armónico | 3 | `P3_ALT50` | Más altura: +50% (art. 2.6.9) | 5.010 | 703 | 48,8 % |
+| Conjunto Armónico | 5 | `P5_C75A50` | Superficie +75% y altura +50% (arts. 2.6.7 y 2.6.9) | 5.007 | 703 | 48,8 % |
 | Densidad | 4 | `P4_DEN28` | Densidad: factor 2,8 | 13.680 | 615 | 42,7 % |
 | Densidad | 4 | `P4_DEN14` | Densidad: factor 1,4 | 10.743 | 547 | 38,0 % |
 
 - **Cifras:** corresponden a `predios_zona_oct_2026_norma` (noviembre de 2026), sobre un total de 1.441 manzanas. Las manzanas se comprobaron contra la tabla oficial y coinciden exactamente.
 - **Recuadro de resumen:** está arriba a la izquierda del mapa y muestra el título, el porcentaje, las manzanas y la explicación de la condición activa.
 - **Leyenda:** está abajo a la izquierda e incluye solo las capas encendidas, en el mismo orden del panel de capas. En densidad muestra los valores presentes de la densidad máxima (hab/há), de menor a mayor.
+- **Condición combinada P5:** reúne los predios que cumplen a la vez P2_CON75 y P3_ALT50, según el campo `P5_C75A50` de la tabla oficial (no se recalcula). Su popup muestra los dos ejercicios, superficie +75 % y altura +50 %, uno tras otro.
 - **Simbología de predios:**
-  - Conjunto Armónico va en `#FF7F7F`.
+  - Conjunto Armónico va en `#FF7F7F`, salvo P5, que tiene color propio (`#D6404A`, propiedad `relleno` de la condición).
   - Densidad se colorea por valor único de `DENSIDAD`, con una rampa azul de alto contraste. El valor 0 o vacío iría en gris, con la etiqueta «Sin densidad máxima definida», pero ningún predio de P4 lo tiene.
   - Todas las condiciones tienen contorno gris de 0,4 px.
 - **Mover y cambiar el tamaño:** el resumen y la leyenda se arrastran a cualquier parte del mapa y se agrandan o achican desde su esquina inferior derecha (todo el contenido escala junto). Doble clic los devuelve a su posición y tamaño iniciales. La imagen exportada los incluye tal como están.
@@ -53,7 +55,8 @@ Contiene todo lo que se ve en el panel y en el recuadro del mapa:
   - `texto` (explicación completa);
   - `resumen` (frase corta del popup);
   - `manzanas` y `porcentaje` (se muestran tal cual);
-  - `ejercicio`: `multiplicador` 1,50 / 1,75 / 1,25 / 1,50 o `factor` 2,8 / 1,4.
+  - `ejercicio`: `multiplicador` 1,50 / 1,75 / 1,25 / 1,50 o `factor` 2,8 / 1,4. Puede ser una lista (P5 lleva constructibilidad y altura);
+  - `relleno` (opcional): color propio de la condición.
 - Generales:
   - `ejercicio.metrosPorPiso` (2,5 m) y la nota al pie;
   - `ejercicio.densidad`: factor anterior al DS 68 (4), incremento de superficie bruta (30 %) y el rótulo del bloque;
@@ -139,6 +142,9 @@ Cada cambio en la rama `main` se compila y se publica solo, mediante el flujo `.
 
 **Si GitHub Pages falla:** a veces responde «Deployment failed, try again later». Basta con volver a ejecutar el despliegue fallido (`gh run rerun <id> --failed`) unos minutos después.
 
-**Respaldos:** las versiones publicadas anteriores quedaron en las etiquetas `v1-antes-actualizacion` (antes de las 7 condiciones) y `v2-antes-nov2026` (antes de `predios_zona_oct_2026_norma`).
+**Respaldos:** las versiones publicadas anteriores quedaron en estas etiquetas:
+- `v1-antes-actualizacion`: antes de las 7 condiciones.
+- `v2-antes-nov2026`: antes de `predios_zona_oct_2026_norma`.
+- `v3-antes-p5`: antes de la condición P5 y de la vialidad corregida (de 1.245 a 1.235 segmentos).
 
 El sitio es público. `index.html` pide a los buscadores que no lo indexen (`noindex`).

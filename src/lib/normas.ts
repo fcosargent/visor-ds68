@@ -3,7 +3,7 @@
 // del Excel solo se toman los valores con incentivo. Multiplicadores y factores: condiciones.json.
 
 import { NORMAS_URL } from '../config/layers';
-import { CONFIG, type CondicionActiva } from '../config/condiciones';
+import { CONFIG, ejerciciosDe, type CondicionActiva, type Ejercicio } from '../config/condiciones';
 
 export interface Norma {
   texto: string | null;
@@ -91,11 +91,28 @@ export interface FilaEjercicio {
 
 export type ResultadoEjercicio = { titulo?: string; filas: FilaEjercicio[] } | { titulo?: string; mensaje: string } | null;
 
-/** Ejercicio referencial según la condición activa, con los valores oficiales del predio. */
-export function calcularEjercicio(props: PredioProps, condicion: CondicionActiva): ResultadoEjercicio {
-  const ej = condicion.ejercicio;
-  if (!ej) return null;
+const TITULO_POR_TIPO: Record<Ejercicio['tipo'], string> = {
+  constructibilidad: 'Ejercicio referencial: más superficie construida',
+  altura: 'Ejercicio referencial: más altura',
+  densidad: '',
+};
 
+/**
+ * Ejercicios referenciales de la condición activa, con los valores oficiales del predio.
+ * Una condición combinada (P5) entrega varios, que se muestran uno tras otro.
+ */
+export function calcularEjercicios(props: PredioProps, condicion: CondicionActiva): NonNullable<ResultadoEjercicio>[] {
+  const lista = ejerciciosDe(condicion);
+  return lista
+    .map((ej) => {
+      const r = calcularEjercicio(props, ej);
+      // Con varios ejercicios, cada bloque lleva su propio título.
+      return r && lista.length > 1 && !r.titulo ? { ...r, titulo: TITULO_POR_TIPO[ej.tipo] } : r;
+    })
+    .filter((r): r is NonNullable<ResultadoEjercicio> => r !== null);
+}
+
+function calcularEjercicio(props: PredioProps, ej: Ejercicio): ResultadoEjercicio {
   const superficie = props.s;
   const filaSuperficie = { etiqueta: 'Superficie del predio', valor: `${fmt(superficie, 0)} m²` };
   const pct = (m: number) => `+${fmt((m - 1) * 100, 1)}%`;

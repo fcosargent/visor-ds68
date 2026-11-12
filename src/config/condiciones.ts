@@ -21,7 +21,10 @@ export interface Condicion {
   porcentaje: number;
   texto: string;
   resumen: string;
-  ejercicio: Ejercicio | null;
+  /** Un ejercicio, varios (condición combinada, se muestran uno tras otro) o ninguno. */
+  ejercicio: Ejercicio | Ejercicio[] | null;
+  /** Color de relleno propio; si no se indica, se usa el del grupo. */
+  relleno?: string;
 }
 
 export interface Plano {
@@ -82,9 +85,18 @@ export const CONDICIONES: CondicionActiva[] = CONFIG.grupos.flatMap((grupo) =>
 
 export const condicionPorCampo = (campo: string) => CONDICIONES.find((c) => c.campo === campo) ?? CONDICIONES[0];
 
-/** Color de relleno de un predio según la simbología de su grupo (por clase de densidad si corresponde). */
-export function colorRelleno(s: Simbologia, valor: number | null | undefined): string {
+/** Ejercicios de una condición como lista. */
+export const ejerciciosDe = (c: Condicion): Ejercicio[] =>
+  c.ejercicio == null ? [] : Array.isArray(c.ejercicio) ? c.ejercicio : [c.ejercicio];
+
+/**
+ * Color de relleno de un predio: el propio de la condición, la clase de densidad
+ * si el grupo la usa, o el color del grupo.
+ */
+export function colorRelleno(c: CondicionActiva, valor?: number | null): string {
+  const s = c.grupo.simbologia;
   const cl = s.clasificacion;
+  if (c.relleno) return c.relleno;
   if (!cl) return s.relleno;
   if (!valor) return cl.sinValor.color;
   return cl.clases.find((c) => c.valor === valor)?.color ?? cl.sinValor.color;

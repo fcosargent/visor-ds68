@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { LayerConfig } from '../config/layers';
-import type { CondicionActiva } from '../config/condiciones';
+import { colorRelleno, type CondicionActiva } from '../config/condiciones';
 import Swatch from './Swatch';
 
 interface Props {
@@ -50,7 +50,7 @@ export default function LayerPanel({ items, condicion, active, onToggle, onMove 
                       layer={
                         layer ?? {
                           type: 'polygon',
-                          style: { color: s.contorno, weight: 1, fillColor: s.relleno, fillOpacity: s.opacidadRelleno },
+                          style: { color: s.contorno, weight: 1, fillColor: colorRelleno(condicion), fillOpacity: s.opacidadRelleno },
                         }
                       }
                     />

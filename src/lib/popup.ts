@@ -3,7 +3,7 @@
 import type { FichaConfig } from '../config/layers';
 import { CONFIG, type CondicionActiva } from '../config/condiciones';
 import {
-  calcularEjercicio,
+  calcularEjercicios,
   formatearNumero,
   textoNorma,
   textoNumerico,
@@ -23,7 +23,7 @@ export function predioPopup(props: PredioProps, condicion: CondicionActiva, norm
   const zonasExcel = zonasDelPredio(props, normas);
   const incentivo = (clave: 'alt_inc' | 'constr_inc_viv' | 'dens_inc') =>
     zonasExcel.length ? textoNorma(zonasExcel, clave) : normas ? noAplica : 'Cargando…';
-  const ejercicio = calcularEjercicio(props, condicion);
+  const ejercicios = calcularEjercicios(props, condicion);
 
   const filasNormas = [
     fila('Altura máxima', props.alt ?? noAplica),
@@ -38,14 +38,16 @@ export function predioPopup(props: PredioProps, condicion: CondicionActiva, norm
     );
   }
 
-  let ejercicioHtml = '';
-  if (ejercicio) {
+  const bloques = ejercicios.map((ejercicio) => {
     const cuerpo =
       'filas' in ejercicio
         ? `<table class="popup-table">${ejercicio.filas.map((f) => fila(f.etiqueta, f.valor, f.destacado ? 'is-strong' : '')).join('')}</table>`
         : `<p class="popup-muted">${escapeHtml(ejercicio.mensaje)}</p>`;
-    ejercicioHtml = `<h4>${escapeHtml(ejercicio.titulo ?? 'Ejercicio referencial')}</h4>${cuerpo}<p class="popup-note">${escapeHtml(CONFIG.ejercicio.nota)}</p>`;
-  }
+    return `<h4>${escapeHtml(ejercicio.titulo ?? 'Ejercicio referencial')}</h4>${cuerpo}`;
+  });
+  const ejercicioHtml = bloques.length
+    ? `${bloques.join('')}<p class="popup-note">${escapeHtml(CONFIG.ejercicio.nota)}</p>`
+    : '';
 
   return `
     <div class="popup" style="--accent:${condicion.grupo.recuadro.acento}">

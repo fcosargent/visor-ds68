@@ -62,7 +62,7 @@ CAMPOS_NORMA = {
     "ALT_MAX_M": "al",  # idem, valor numérico en metros
     "DENSIDAD": "d",  # densidad máxima (hab/há)
 }
-CAMPOS_CONDICION = ["P1_CA_BASE", "P2_CON50", "P2_CON75", "P3_ALT25", "P3_ALT50", "P4_DEN28", "P4_DEN14"]
+CAMPOS_CONDICION = ["P1_CA_BASE", "P2_CON50", "P2_CON75", "P3_ALT25", "P3_ALT50", "P5_C75A50", "P4_DEN28", "P4_DEN14"]
 DECIMALES_PREDIOS = 6  # ~10 cm; no se simplifican los límites prediales
 
 # Siglas del Plan Regulador que se desarrollan en el nombre de la zona.

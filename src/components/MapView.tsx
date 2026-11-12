@@ -74,7 +74,7 @@ function buildCondicionLayer(
       renderer,
       color: s.contorno,
       weight: s.grosor,
-      fillColor: colorRelleno(s, (f?.properties as PredioProps | undefined)?.d),
+      fillColor: colorRelleno(condicion, (f?.properties as PredioProps | undefined)?.d),
       fillOpacity: s.opacidadRelleno,
     }),
     onEachFeature: (feature, layer) => {
