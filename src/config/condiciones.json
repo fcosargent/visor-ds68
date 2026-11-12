@@ -12,7 +12,7 @@
       },
       "simbologia": {
         "relleno": "#FF7F7F",
-        "contorno": "#6E6E6E",
+        "contorno": "#1A1A1A",
         "grosor": 0.25,
         "opacidadRelleno": 0.85
       },
@@ -139,7 +139,7 @@
       },
       "simbologia": {
         "relleno": "#6EC6F0",
-        "contorno": "#6E6E6E",
+        "contorno": "#1A1A1A",
         "grosor": 0.25,
         "opacidadRelleno": 0.85,
         "clasificacion": {
