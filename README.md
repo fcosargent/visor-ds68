@@ -25,7 +25,7 @@ Ocho condiciones, organizadas en dos grupos. Se ve una condición a la vez.
 - **Leyenda:** está abajo a la izquierda e incluye solo las capas encendidas, en el mismo orden del panel de capas. En densidad muestra los valores presentes de la densidad máxima (hab/há), de menor a mayor.
 - **Condición combinada P5:** reúne los predios que cumplen a la vez P2_CON75 y P3_ALT50, según el campo `P5_C75A50` de la tabla oficial (no se recalcula). Su popup muestra los dos ejercicios, superficie +75 % y altura +50 %, uno tras otro.
 - **Simbología de predios:**
-  - Conjunto Armónico va en `#FF7F7F`, salvo P5, que tiene color propio (`#D6404A`, propiedad `relleno` de la condición).
+  - Conjunto Armónico va en `#FF7F7F`, incluida P5. Si alguna condición necesitara un color propio, se indica con la propiedad `relleno` de esa condición en `condiciones.json`.
   - Densidad se colorea por valor único de `DENSIDAD`, con una rampa azul de alto contraste. El valor 0 o vacío iría en gris, con la etiqueta «Sin densidad máxima definida», pero ningún predio de P4 lo tiene.
   - Todas las condiciones tienen contorno gris de 0,4 px.
 - **Mover y cambiar el tamaño:** el resumen y la leyenda se arrastran a cualquier parte del mapa y se agrandan o achican desde su esquina inferior derecha (todo el contenido escala junto). Doble clic los devuelve a su posición y tamaño iniciales. La imagen exportada los incluye tal como están.
