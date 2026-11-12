@@ -26,8 +26,8 @@ Ocho condiciones, organizadas en dos grupos. Se ve una condición a la vez.
 - **Condición combinada P5:** reúne los predios que cumplen a la vez P2_CON75 y P3_ALT50, según el campo `P5_C75A50` de la tabla oficial (no se recalcula). Su popup muestra los dos ejercicios, superficie +75 % y altura +50 %, uno tras otro.
 - **Simbología de predios:**
   - Conjunto Armónico va en `#FF7F7F`, incluida P5. Si alguna condición necesitara un color propio, se indica con la propiedad `relleno` de esa condición en `condiciones.json`.
-  - Densidad se colorea por valor único de `DENSIDAD`, con una rampa azul de alto contraste. El valor 0 o vacío iría en gris, con la etiqueta «Sin densidad máxima definida», pero ningún predio de P4 lo tiene.
-  - Todas las condiciones y la capa «Predios de la comuna» tienen contorno casi negro (`#1A1A1A`) de 0,25 px. En la leyenda y el panel de capas, la muestra lleva un contorno de 0,5 px (más fino no se distinguiría en un ícono tan pequeño).
+  - Densidad se colorea por valor único de `DENSIDAD`, con una rampa azul de casi blanco a azul pizarra; los tonos oscuros son poco saturados para que se distingan los deslindes. El valor 0 o vacío iría en gris, con la etiqueta «Sin densidad máxima definida», pero ningún predio de P4 lo tiene.
+  - Contornos: Conjunto Armónico y la capa «Predios de la comuna» usan casi negro (`#1A1A1A`) de 0,25 px; Densidad usa gris claro (`#A3ACB6`) de 0,5 px, para que los deslindes se vean sobre los azules oscuros. En la leyenda y el panel de capas, la muestra lleva un contorno mínimo de 0,5 px.
 - **Mover y cambiar el tamaño:** el resumen y la leyenda se arrastran a cualquier parte del mapa y se agrandan o achican desde su esquina inferior derecha (todo el contenido escala junto). Doble clic los devuelve a su posición y tamaño iniciales. La imagen exportada los incluye tal como están.
 - **Capas de referencia:**
   - Al abrir, solo están encendidos el límite comunal y los nombres de calles.

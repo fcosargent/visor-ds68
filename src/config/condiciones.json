@@ -139,8 +139,8 @@
       },
       "simbologia": {
         "relleno": "#6EC6F0",
-        "contorno": "#1A1A1A",
-        "grosor": 0.25,
+        "contorno": "#A3ACB6",
+        "grosor": 0.5,
         "opacidadRelleno": 0.85,
         "clasificacion": {
           "titulo": "Densidad máxima del Plan Regulador",
@@ -160,31 +160,31 @@
             },
             {
               "valor": 895,
-              "color": "#6baed6"
+              "color": "#7bb2d6"
             },
             {
               "valor": 1140,
-              "color": "#4292c6"
+              "color": "#5b9bc9"
             },
             {
               "valor": 1230,
-              "color": "#2171b5"
+              "color": "#4682b4"
             },
             {
               "valor": 1600,
-              "color": "#08519c"
+              "color": "#3a6d99"
             },
             {
               "valor": 1800,
-              "color": "#08306b"
+              "color": "#335c80"
             },
             {
               "valor": 2460,
-              "color": "#061d45"
+              "color": "#2c4c69"
             },
             {
               "valor": 2740,
-              "color": "#030f26"
+              "color": "#243d54"
             }
           ],
           "sinValor": {
