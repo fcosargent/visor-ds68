@@ -13,7 +13,7 @@
       "simbologia": {
         "relleno": "#FF7F7F",
         "contorno": "#6E6E6E",
-        "grosor": 0.4,
+        "grosor": 0.25,
         "opacidadRelleno": 0.85
       },
       "planos": [
@@ -140,7 +140,7 @@
       "simbologia": {
         "relleno": "#6EC6F0",
         "contorno": "#6E6E6E",
-        "grosor": 0.4,
+        "grosor": 0.25,
         "opacidadRelleno": 0.85,
         "clasificacion": {
           "titulo": "Densidad máxima del Plan Regulador",

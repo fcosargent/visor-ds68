@@ -78,7 +78,7 @@ export const REFERENCE_LAYERS: LayerConfig[] = [
     label: 'Predios de la comuna',
     url: PREDIOS_URL,
     type: 'polygon',
-    style: { color: '#8C8C8C', weight: 0.4, fillOpacity: 0 },
+    style: { color: '#8C8C8C', weight: 0.25, fillOpacity: 0 },
     visibleByDefault: false,
     category: 'referencia',
     description: 'Todos los predios de la comuna, solo contorno.',

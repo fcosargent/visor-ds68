@@ -1,5 +1,8 @@
 import type { LayerConfig } from '../config/layers';
 
+/** Grosor mínimo del contorno en la muestra: bordes más finos no se distinguirían en un ícono de 18 px. */
+const GROSOR_MIN_MUESTRA = 0.5;
+
 /** Muestra de simbología a partir del estilo declarado en layers.ts. */
 export default function Swatch({ layer }: { layer: Pick<LayerConfig, 'type' | 'style'> }) {
   const { type, style } = layer;
@@ -34,7 +37,7 @@ export default function Swatch({ layer }: { layer: Pick<LayerConfig, 'type' | 's
         fill={style.fillColor ?? 'none'}
         fillOpacity={style.fillOpacity ?? 0}
         stroke={style.color}
-        strokeWidth={Math.max(style.weight, 1)}
+        strokeWidth={Math.max(style.weight, GROSOR_MIN_MUESTRA)}
         strokeOpacity={style.opacity ?? 1}
         strokeDasharray={style.dashArray}
       />

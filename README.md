@@ -27,7 +27,7 @@ Ocho condiciones, organizadas en dos grupos. Se ve una condición a la vez.
 - **Simbología de predios:**
   - Conjunto Armónico va en `#FF7F7F`, incluida P5. Si alguna condición necesitara un color propio, se indica con la propiedad `relleno` de esa condición en `condiciones.json`.
   - Densidad se colorea por valor único de `DENSIDAD`, con una rampa azul de alto contraste. El valor 0 o vacío iría en gris, con la etiqueta «Sin densidad máxima definida», pero ningún predio de P4 lo tiene.
-  - Todas las condiciones tienen contorno gris de 0,4 px.
+  - Todas las condiciones y la capa «Predios de la comuna» tienen contorno gris de 0,25 px. En la leyenda y el panel de capas, la muestra lleva un contorno de 0,5 px (más fino no se distinguiría en un ícono tan pequeño).
 - **Mover y cambiar el tamaño:** el resumen y la leyenda se arrastran a cualquier parte del mapa y se agrandan o achican desde su esquina inferior derecha (todo el contenido escala junto). Doble clic los devuelve a su posición y tamaño iniciales. La imagen exportada los incluye tal como están.
 - **Capas de referencia:**
   - Al abrir, solo están encendidos el límite comunal y los nombres de calles.

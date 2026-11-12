@@ -50,7 +50,7 @@ export default function LayerPanel({ items, condicion, active, onToggle, onMove 
                       layer={
                         layer ?? {
                           type: 'polygon',
-                          style: { color: s.contorno, weight: 1, fillColor: colorRelleno(condicion), fillOpacity: s.opacidadRelleno },
+                          style: { color: s.contorno, weight: s.grosor, fillColor: colorRelleno(condicion), fillOpacity: s.opacidadRelleno },
                         }
                       }
                     />

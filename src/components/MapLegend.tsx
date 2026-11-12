@@ -12,9 +12,9 @@ interface Props {
   valoresClase: number[] | null;
 }
 
-const swatchPoligono = (relleno: string, contorno: string, opacidad: number) => ({
+const swatchPoligono = (relleno: string, contorno: string, opacidad: number, grosor: number) => ({
   type: 'polygon' as const,
-  style: { color: contorno, weight: 1, fillColor: relleno, fillOpacity: opacidad },
+  style: { color: contorno, weight: grosor, fillColor: relleno, fillOpacity: opacidad },
 });
 
 /** Leyenda dentro del mapa: la condición activa y solo las capas de referencia encendidas. */
@@ -33,7 +33,7 @@ export default function MapLegend({ condicion, items, valoresClase }: Props) {
       <ul>
         {(valoresClase ?? cl.clases.map((c) => c.valor)).map((v) => (
           <li key={v}>
-            <Swatch layer={swatchPoligono(colorRelleno(condicion, v), s.contorno, s.opacidadRelleno)} />
+            <Swatch layer={swatchPoligono(colorRelleno(condicion, v), s.contorno, s.opacidadRelleno, s.grosor)} />
             <span>{v ? formatNumber(v) : cl.sinValor.etiqueta}</span>
           </li>
         ))}
@@ -41,7 +41,7 @@ export default function MapLegend({ condicion, items, valoresClase }: Props) {
     </li>
   ) : (
     <li key="condicion" className="legend-main">
-      <Swatch layer={swatchPoligono(colorRelleno(condicion), s.contorno, s.opacidadRelleno)} />
+      <Swatch layer={swatchPoligono(colorRelleno(condicion), s.contorno, s.opacidadRelleno, s.grosor)} />
       <span>{condicion.nombre}</span>
     </li>
   );
