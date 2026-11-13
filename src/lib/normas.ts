@@ -95,6 +95,7 @@ const TITULO_POR_TIPO: Record<Ejercicio['tipo'], string> = {
   constructibilidad: 'Ejercicio referencial: más superficie construida',
   altura: 'Ejercicio referencial: más altura',
   densidad: '',
+  formulaConstructibilidad: 'Constructibilidad: cómo se calcula',
 };
 
 /**
@@ -129,6 +130,24 @@ function calcularEjercicio(props: PredioProps, ej: Ejercicio): ResultadoEjercici
         { etiqueta: 'Superficie construible actual', valor: `${fmt(actual, 0)} m²` },
         { etiqueta: `Con esta condición (${pct(ej.multiplicador)})`, valor: `${fmt(nueva, 0)} m²` },
         { etiqueta: 'Diferencia', valor: `+${fmt(nueva - actual, 0)} m²`, destacado: true },
+      ],
+    };
+  }
+
+  if (ej.tipo === 'formulaConstructibilidad') {
+    const coef = props.cv;
+    if (!coef) return { titulo: TITULO_POR_TIPO.formulaConstructibilidad, mensaje: CONFIG.textos.sinValorNumerico };
+    return {
+      titulo: TITULO_POR_TIPO.formulaConstructibilidad,
+      filas: [
+        { etiqueta: 'Fórmula', valor: 'Superficie del predio × coeficiente de constructibilidad' },
+        filaSuperficie,
+        { etiqueta: 'Coeficiente de constructibilidad (vivienda)', valor: fmt(coef, 2) },
+        {
+          etiqueta: 'Superficie máxima construible',
+          valor: `${fmt(superficie, 0)} m² × ${fmt(coef, 2)} = ${fmt(superficie * coef, 0)} m²`,
+          destacado: true,
+        },
       ],
     };
   }

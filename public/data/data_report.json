@@ -1,5 +1,5 @@
 {
-  "generado": "2026-11-12T17:28:53",
+  "generado": "2026-11-13T10:51:35",
   "origen": [
     "3. Coberturas DS68",
     "3. Coberturas DS68 (respaldo)"
@@ -181,6 +181,26 @@
       "archivo": "ZONAS_DE_CONSERVACION_HISTORICA_MARZO_2025.shp",
       "tipo_geometria": "Polygon",
       "registros": 21,
+      "crs_original": "EPSG:32719",
+      "crs_nombre": "WGS 84 / UTM zone 19S",
+      "codificacion": "UTF-8",
+      "componentes_faltantes": [],
+      "campos": [
+        "ID_ZCH",
+        "ZONA_ZCH",
+        "NOMBRE_ZCH",
+        "FICHA_ZCH",
+        "FECHA",
+        "FUENTE"
+      ],
+      "geometrias_vacias": 0,
+      "geometrias_invalidas": 0,
+      "geometrias_invalidas_tras_reparar": 0
+    },
+    "Zona_con_incentivos_cuestionados.shp": {
+      "archivo": "Zona_con_incentivos_cuestionados.shp",
+      "tipo_geometria": "Polygon",
+      "registros": 2,
       "crs_original": "EPSG:32719",
       "crs_nombre": "WGS 84 / UTM zone 19S",
       "codificacion": "UTF-8",
@@ -508,7 +528,12 @@
     {
       "archivo": "zonas_conservacion_historica.geojson",
       "entidades": 21,
-      "bytes": 32749
+      "bytes": 31609
+    },
+    {
+      "archivo": "zonas_incentivos_cuestionados.geojson",
+      "entidades": 2,
+      "bytes": 4365
     },
     {
       "archivo": "limite_comunal.geojson",
@@ -528,7 +553,7 @@
     {
       "archivo": "zonas_incentivo.geojson",
       "entidades": 44,
-      "bytes": 598745
+      "bytes": 516877
     },
     {
       "archivo": "monumentos_historicos.geojson",
@@ -538,7 +563,7 @@
     {
       "archivo": "inmuebles_conservacion_historica.geojson",
       "entidades": 1498,
-      "bytes": 1330861
+      "bytes": 1180974
     },
     {
       "archivo": "etiquetas_ejes_viales.geojson",
@@ -554,6 +579,7 @@
     "Vias_Expresas_Oficiales.shp": "actualizada",
     "Vias_Troncales_Oficiales.shp": "actualizada",
     "ZONAS_DE_CONSERVACION_HISTORICA_MARZO_2025.shp": "actualizada",
+    "Zona_con_incentivos_cuestionados.shp": "actualizada",
     "LIMITE_COMUNA.shp": "actualizada",
     "vialidad_comunal_20metros.shp": "actualizada",
     "Manzanas.shp": "actualizada",
@@ -716,6 +742,11 @@
     "6. shp pre reg por zona/3. Coberturas DS68/zci_prcs_wgs84_predios_2.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",
     "6. shp pre reg por zona/3. Coberturas DS68/zci_prcs_wgs84_predios_2.shp": "15525694edd3a42717335683345926fb0c7cec3758ed12a5557ed524c0a0734b",
     "6. shp pre reg por zona/3. Coberturas DS68/zci_prcs_wgs84_predios_2.shx": "2519a10458e7d62b45d1dc8cd355d6cf26d23fb7b7fd50b851df61a84a93cff1",
+    "6. shp pre reg por zona/3. Coberturas DS68/Zona_con_incentivos_cuestionados.cpg": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
+    "6. shp pre reg por zona/3. Coberturas DS68/Zona_con_incentivos_cuestionados.dbf": "5a57f470f8cf1c06105397e8830385c4495170df0de5d16973b8aaff38e3f08c",
+    "6. shp pre reg por zona/3. Coberturas DS68/Zona_con_incentivos_cuestionados.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",
+    "6. shp pre reg por zona/3. Coberturas DS68/Zona_con_incentivos_cuestionados.shp": "727438cb2f2b9078504fa51450bd3893d45c8112b08768f7f815f63625fba860",
+    "6. shp pre reg por zona/3. Coberturas DS68/Zona_con_incentivos_cuestionados.shx": "34d0f990928f4f76f8decdba997abbc25eda637a59a15f3c1f7eb3f352d7ea0b",
     "6. shp pre reg por zona/3. Coberturas DS68/ZONAS_DE_CONSERVACION_HISTORICA_MARZO_2025.cpg": "3ad3031f5503a4404af825262ee8232cc04d4ea6683d42c5dd0a2f2a27ac9824",
     "6. shp pre reg por zona/3. Coberturas DS68/ZONAS_DE_CONSERVACION_HISTORICA_MARZO_2025.dbf": "a0062895dcb25cd73c270fff43ee036fda348a5c741edaa13194440d90aa91cb",
     "6. shp pre reg por zona/3. Coberturas DS68/ZONAS_DE_CONSERVACION_HISTORICA_MARZO_2025.prj": "f483310289839d4ac0abcdc3a974d7c1c374e072433ea1f3aca6617282250c04",

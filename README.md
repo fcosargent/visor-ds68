@@ -36,6 +36,12 @@ Ocho condiciones, organizadas en dos grupos. Se ve una condición a la vez.
   - MH tiene contorno bordó y la ICH, contorno ámbar.
   - Al hacer clic en uno se abre su ficha con todos los campos y el enlace «Más información».
   - Cuando están encendidas y sobre los predios, un clic dentro de un MH o ICH abre su ficha. Para ver el predio que hay debajo, basta con apagar la capa o bajarla en el orden.
+- **Zonas de Conservación Histórica (ZCH):** al hacer clic en su **borde** se abre su ficha, con los mismos alias del Observatorio. Como la capa no tiene relleno, el interior no responde al clic, así que los predios de adentro siguen abriendo su propio popup.
+- **Grupo «Incentivos normativos del Plan Regulador»:**
+  - Reúne «Zonas con incentivo» (amarillo) y «Zonas con incentivos cuestionados» (dorado más oscuro, 2 zonas: A1 «Micro Centro» y D7 «San Vicente - San Eugenio»).
+  - Al abrir, el grupo está apagado y sus dos capas marcadas: al encender el grupo aparecen ambas, y cada una se puede apagar por separado.
+  - El grupo se ordena como una sola unidad con ▲ ▼.
+  - Las zonas con incentivos cuestionados tienen ficha con los alias de las ZCH.
 - **Popup del predio:** muestra el código catastral, la zona (`ZONA_TAB` y su nombre), qué permite la condición, las normas de la zona y un ejercicio referencial.
 - **«Descargar imagen (JPG)»:** exporta la vista actual con título, cifras, leyenda, escala, norte, fecha y fuente. El archivo se llama `DS68_<campo>.jpg`.
 - **Mapa base sin textos:** se usa la versión vectorial de Esri «Light Gray Canvas Base», dibujada con MapLibre, sin ninguna etiqueta (ni comunas, ni calles, ni parques). Los nombres de calles los entrega solo la capa oficial «Nombres de calles». Si el mapa vectorial no carga, se usa el mapa raster equivalente, que trae algunos nombres grabados desde el zoom 15 (`src/lib/basemap.ts`).
@@ -64,8 +70,10 @@ Contiene todo lo que se ve en el panel y en el recuadro del mapa:
 
 Tras editar, subir el cambio a GitHub. El sitio se recompila solo.
 
-### Fichas de MH e ICH
-El título y los alias de cada campo, en su orden, están en `src/config/layers.ts` (propiedad `ficha` de las capas `mh` e `ich`).
+### Fichas y grupos de capas
+- **Fichas:** el título y los alias de cada campo, en su orden, están en `src/config/layers.ts`, en la propiedad `ficha` de las capas `mh`, `ich`, `zch` e `incentivos_cuestionados`.
+- **Grupos:** se definen en `GRUPOS_CAPAS` (`layers.ts`); cada capa indica su grupo con la propiedad `grupo`.
+- **Definiciones de «Referencia normativa»:** están en `definiciones` de `condiciones.json` (título, texto, fórmula opcional y fuente).
 
 ### `public/data/normas_zonas.json`
 Se genera desde el Excel `Normas edificacion PRCS 2018 ... .xlsx`, hoja `Zonas`. La zona D11 se toma de la hoja «Zona D», porque no está en `Zonas`. El visor lo usa solo para los valores **con incentivo** (altura, constructibilidad y densidad). Los valores base y los cálculos vienen de cada predio.
@@ -91,6 +99,7 @@ Usa los valores oficiales de cada predio (`COEF_CVIV`, `ALT_MAX_M`, `DENSIDAD`).
   - Viviendas con el DS 68 = densidad × superficie bruta ÷ 2,8 (o ÷ 1,4).
   - Las viviendas se redondean hacia abajo. El porcentaje de variación es el de la norma: +42,9 % con 2,8 y +185,7 % con 1,4.
   - Si la densidad es 0 o no existe, se muestra «No aplica».
+  - Debajo se muestra además «Constructibilidad: cómo se calcula»: superficie del predio × coeficiente de constructibilidad = superficie máxima construible.
 - **Base del cálculo:** los porcentajes se aplican sobre la norma base. Los valores con incentivo se muestran solo como referencia.
 
 ## Datos (`public/data/`)
@@ -146,5 +155,6 @@ Cada cambio en la rama `main` se compila y se publica solo, mediante el flujo `.
 - `v1-antes-actualizacion`: antes de las 7 condiciones.
 - `v2-antes-nov2026`: antes de `predios_zona_oct_2026_norma`.
 - `v3-antes-p5`: antes de la condición P5 y de la vialidad corregida (de 1.245 a 1.235 segmentos).
+- `v4-antes-incentivos`: antes del grupo de incentivos y las fichas de ZCH.
 
 El sitio es público. `index.html` pide a los buscadores que no lo indexen (`noindex`).

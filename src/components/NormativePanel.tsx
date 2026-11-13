@@ -24,6 +24,17 @@ export default function NormativePanel({ activa, onClose }: Props) {
           )}
         </section>
       ))}
+      <section className="norm-group norm-definitions">
+        <h3>Definiciones</h3>
+        {CONFIG.definiciones.map((d) => (
+          <div key={d.titulo} className="norm-section">
+            <h4>{d.titulo}</h4>
+            <p>{d.texto}</p>
+            {d.formula && <p className="norm-formula">{d.formula}</p>}
+            <p className="norm-source">{d.fuente}</p>
+          </div>
+        ))}
+      </section>
       <p className="disclaimer">{CONFIG.ejercicio.nota}</p>
     </Dialog>
   );

@@ -35,12 +35,45 @@ export interface LayerConfig {
   tooltip?: (props: Record<string, unknown>) => string;
   /** Ventana emergente con todos los campos, en el orden y con los alias indicados. */
   ficha?: FichaConfig;
+  /** Grupo de capas al que pertenece (ver GRUPOS_CAPAS). */
+  grupo?: string;
 }
 
 export interface FichaConfig {
   titulo: string;
   campos: { campo: string; alias: string; enlace?: boolean }[];
 }
+
+/**
+ * Grupos de capas de referencia: el grupo se enciende y apaga como un todo, y dentro
+ * de él cada capa conserva su propio interruptor. Una capa del grupo se ve solo si el
+ * grupo y la capa están encendidos.
+ */
+export interface GrupoCapas {
+  id: string;
+  label: string;
+  description: string;
+  visibleByDefault: boolean;
+}
+
+export const GRUPOS_CAPAS: GrupoCapas[] = [
+  {
+    id: 'incentivos',
+    label: 'Incentivos normativos del Plan Regulador',
+    description: 'Zonas con incentivo y zonas con incentivos cuestionados.',
+    visibleByDefault: false,
+  },
+];
+
+/** Alias de la ficha de las Zonas de Conservación Histórica (mismos campos en ambas capas). */
+const CAMPOS_FICHA_ZCH: FichaConfig['campos'] = [
+  { campo: 'ID_ZCH', alias: 'ID' },
+  { campo: 'ZONA_ZCH', alias: 'Zona de Conservación Histórica (código)' },
+  { campo: 'NOMBRE_ZCH', alias: 'Nombre Zona de Conservación Histórica' },
+  { campo: 'FICHA_ZCH', alias: 'Ver ficha de la Zona de Conservación Histórica', enlace: true },
+  { campo: 'FECHA', alias: 'Fecha de la cobertura' },
+  { campo: 'FUENTE', alias: 'Fuente' },
+];
 
 const DATA = `${import.meta.env.BASE_URL}data/`;
 
@@ -201,16 +234,33 @@ export const REFERENCE_LAYERS: LayerConfig[] = [
   },
   {
     id: 'zonas_incentivo',
-    label: 'Zonas de incentivo',
+    label: 'Zonas con incentivo',
     url: `${DATA}zonas_incentivo.geojson`,
     type: 'polygon',
     style: { color: '#B8930F', weight: 1.2, fillColor: '#F7DC6F', fillOpacity: 0.35 },
-    visibleByDefault: false,
+    // Dentro del grupo «incentivos»: parte encendida, pero se ve solo al encender el grupo.
+    visibleByDefault: true,
+    grupo: 'incentivos',
     category: 'referencia',
     description: 'Predios de las zonas y sectores especiales con incentivo.',
     source: 'zci_prcs_wgs84_predios_2.shp (o ZONAS_DE_INCENTIVO.shp, si existe)',
     order: 22,
     tooltip: (p) => `${String(p.ZONAS_VIGE ?? '')}${p.TIPO ? ` · ${String(p.TIPO)}` : ''}`,
+  },
+  {
+    id: 'incentivos_cuestionados',
+    label: 'Zonas con incentivos cuestionados',
+    url: `${DATA}zonas_incentivos_cuestionados.geojson`,
+    type: 'polygon',
+    // Misma gama que «Zonas con incentivo», más oscura, para leerlas como relacionadas.
+    style: { color: '#7D5C00', weight: 1.4, fillColor: '#D4A21C', fillOpacity: 0.45 },
+    visibleByDefault: true,
+    grupo: 'incentivos',
+    category: 'referencia',
+    description: 'Zonas con incentivos cuestionados. Clic en una para ver su ficha.',
+    source: 'Zona_con_incentivos_cuestionados.shp',
+    order: 21.5,
+    ficha: { titulo: 'Zonas con incentivos cuestionados, comuna de Santiago.', campos: CAMPOS_FICHA_ZCH },
   },
   {
     id: 'zch',
@@ -220,9 +270,10 @@ export const REFERENCE_LAYERS: LayerConfig[] = [
     style: { color: '#7B3FA0', weight: 2, fillOpacity: 0 },
     visibleByDefault: false,
     category: 'referencia',
-    description: 'Zonas de Conservación Histórica vigentes (marzo de 2025).',
+    description: 'Zonas de Conservación Histórica vigentes (marzo de 2025). Clic en su borde para ver su ficha.',
     source: 'ZONAS_DE_CONSERVACION_HISTORICA_MARZO_2025.shp',
     order: 60,
+    ficha: { titulo: 'Zonas de Conservación Histórica (ZCH), comuna de Santiago.', campos: CAMPOS_FICHA_ZCH },
   },
   {
     id: 'mh',

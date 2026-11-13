@@ -118,16 +118,17 @@ CAMPO_LINEA_ESTACION = "LINEA"
 # Tolerancia de simplificación (metros, en UTM) solo para capas auxiliares complejas.
 TOLERANCIA_AUX = 1.0
 
+# Campos de las Zonas de Conservación Histórica (también los usa la capa de incentivos
+# cuestionados): se publican todos, porque el visor muestra su ficha completa.
+CAMPOS_ZCH = ["ID_ZCH", "ZONA_ZCH", "NOMBRE_ZCH", "FICHA_ZCH", "FECHA", "FUENTE"]
+
 # Capas auxiliares: archivo fuente -> (salida, campos a conservar, simplificar)
 CAPAS_AUXILIARES = {
     "Franjas_Viales_DS68_Troncal_Expresa.shp": ("franjas_viales_ds68.geojson", [], True),
     "Vias_Expresas_Oficiales.shp": ("vias_expresas.geojson", ["NOM_SIU"], True),
     "Vias_Troncales_Oficiales.shp": ("vias_troncales.geojson", ["NOM_SIU"], True),
-    "ZONAS_DE_CONSERVACION_HISTORICA_MARZO_2025.shp": (
-        "zonas_conservacion_historica.geojson",
-        ["ZONA_ZCH", "NOMBRE_ZCH"],
-        True,
-    ),
+    "ZONAS_DE_CONSERVACION_HISTORICA_MARZO_2025.shp": ("zonas_conservacion_historica.geojson", CAMPOS_ZCH, True),
+    "Zona_con_incentivos_cuestionados.shp": ("zonas_incentivos_cuestionados.geojson", CAMPOS_ZCH, True),
     "LIMITE_COMUNA.shp": ("limite_comunal.geojson", ["NOM_COM"], True),
     "vialidad_comunal_20metros.shp": ("vialidad_20m.geojson", ["NOM_SIU", "CLASIF_VIA"], True),
     "Manzanas.shp": ("manzanas.geojson", [], False),
@@ -260,6 +261,36 @@ def leer(ruta: Path) -> tuple[gpd.GeoDataFrame, dict]:
     return gdf, informe
 
 
+def _limpiar_colecciones(destino: Path) -> int:
+    """
+    El escritor GeoJSON de GDAL en modo RFC 7946 convierte algunos polígonos válidos con
+    anillos que se tocan en GeometryCollection (polígono + restos de líneas o puntos).
+    Se conserva solo la parte poligonal, para que el visor los trate como polígonos.
+    """
+    datos = json.loads(destino.read_text(encoding="utf-8"))
+    corregidas = 0
+    for feature in datos.get("features", []):
+        geom = feature.get("geometry") or {}
+        if geom.get("type") != "GeometryCollection":
+            continue
+        poligonos = []
+        for parte in geom.get("geometries", []):
+            if parte["type"] == "Polygon":
+                poligonos.append(parte["coordinates"])
+            elif parte["type"] == "MultiPolygon":
+                poligonos.extend(parte["coordinates"])
+        if poligonos:
+            feature["geometry"] = (
+                {"type": "Polygon", "coordinates": poligonos[0]}
+                if len(poligonos) == 1
+                else {"type": "MultiPolygon", "coordinates": poligonos}
+            )
+            corregidas += 1
+    if corregidas:
+        destino.write_text(json.dumps(datos, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    return corregidas
+
+
 def exportar(gdf: gpd.GeoDataFrame, nombre: str) -> dict:
     """Reproyecta a EPSG:4326 y escribe GeoJSON (RFC 7946, 7 decimales ~1 cm)."""
     destino = SALIDA / nombre
@@ -267,6 +298,9 @@ def exportar(gdf: gpd.GeoDataFrame, nombre: str) -> dict:
         destino.unlink()
     salida = gdf.to_crs(CRS_SALIDA)
     salida.to_file(destino, driver="GeoJSON", engine="pyogrio", layer_options={"RFC7946": "YES"})
+    corregidas = _limpiar_colecciones(destino)
+    if corregidas:
+        print(f"  (en {nombre}: {corregidas} geometría(s) convertidas de GeometryCollection a polígono)")
     tam = destino.stat().st_size
     n_txt = f"{len(salida):,}".replace(",", ".")
     kb_txt = f"{tam / 1024:,.0f}".replace(",", ".")
@@ -562,7 +596,11 @@ def procesar_auxiliar(origen: Path, archivo: str, informe: dict) -> list[dict]:
     gdf, rep = leer(ruta)
     informe["capas"][ruta.name] = rep
     conservar = [c for c in campos if c in gdf.columns]
-    gdf = gdf[conservar + ["geometry"]]
+    gdf = gdf[conservar + ["geometry"]].copy()
+    for col in conservar:
+        # Códigos guardados como decimales (ej. ID_ZCH = 1.0) se publican como enteros.
+        if pd.api.types.is_float_dtype(gdf[col]) and gdf[col].dropna().apply(float.is_integer).all():
+            gdf[col] = gdf[col].astype("Int64")
     if simp:
         gdf = simplificar(gdf)
     return [exportar(gdf, salida)]

@@ -53,6 +53,16 @@ function buildLayer(config: LayerConfig, data: FeatureCollection, renderer: L.Re
       if (config.ficha) {
         const ficha = config.ficha;
         layer.bindPopup(() => fichaPopup(ficha, props), { maxWidth: 340, minWidth: 280 });
+        // Polígonos sin relleno (ZCH): solo responden al clic sobre su borde. Si no, en el
+        // lienzo de Leaflet su interior capturaría los clics dirigidos a los predios de abajo.
+        if (!style.fillOpacity) {
+          const soloBorde = layer as unknown as { _containsPoint: (p: L.Point) => boolean };
+          const deLinea = (L.Polyline.prototype as unknown as { _containsPoint: (p: L.Point, cerrado: boolean) => boolean })
+            ._containsPoint;
+          soloBorde._containsPoint = function (this: unknown, p: L.Point) {
+            return deLinea.call(this, p, true);
+          };
+        }
       } else if (config.tooltip) {
         layer.bindTooltip(escapeHtml(config.tooltip(props)), { direction: 'top', offset: [0, -4] });
       }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ORDEN_CONDICION, REFERENCE_LAYERS, fileName, type LayerConfig } from './config/layers';
+import { GRUPOS_CAPAS, ORDEN_CONDICION, REFERENCE_LAYERS, fileName, type LayerConfig } from './config/layers';
 import { METADATA } from './config/metadata';
 import { CONDICIONES, condicionPorCampo } from './config/condiciones';
 import { loadAvailableFiles } from './lib/data';
@@ -9,19 +9,30 @@ import MapView from './components/MapView';
 import ConditionPanel from './components/ConditionPanel';
 import MapSummary from './components/MapSummary';
 import MapLegend from './components/MapLegend';
-import LayerPanel, { ID_CONDICION } from './components/LayerPanel';
+import LayerPanel, { ID_CONDICION, idGrupo, type ItemCapa } from './components/LayerPanel';
 import NormativePanel from './components/NormativePanel';
 import SourcesPanel from './components/SourcesPanel';
 
 type Panel = 'normativa' | 'fuentes' | null;
 
-/** Orden inicial de las capas (de arriba hacia abajo), según `order` de layers.ts. */
+/**
+ * Orden inicial del panel (de arriba hacia abajo), según `order` de layers.ts. Las capas de
+ * un grupo ocupan una sola posición (el grupo), con el `order` de su capa más alta.
+ */
 const ORDEN_INICIAL = [
-  ...REFERENCE_LAYERS.map((l) => ({ id: l.id, order: l.order })),
+  ...REFERENCE_LAYERS.filter((l) => !l.grupo).map((l) => ({ id: l.id, order: l.order })),
+  ...GRUPOS_CAPAS.map((g) => ({
+    id: idGrupo(g.id),
+    order: Math.max(...REFERENCE_LAYERS.filter((l) => l.grupo === g.id).map((l) => l.order)),
+  })),
   { id: ID_CONDICION, order: ORDEN_CONDICION },
 ]
   .sort((a, b) => b.order - a.order)
   .map((l) => l.id);
+
+/** Capas de un grupo, de arriba hacia abajo según su `order`. */
+const capasDelGrupo = (grupo: string, capas: LayerConfig[]) =>
+  capas.filter((l) => l.grupo === grupo).sort((a, b) => b.order - a.order);
 
 const hoy = () => new Intl.DateTimeFormat('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
 
@@ -40,6 +51,9 @@ export default function App() {
   const [panel, setPanel] = useState<Panel>(null);
   const [normas, setNormas] = useState<NormasData | null>(null);
   const [orden, setOrden] = useState<string[]>(ORDEN_INICIAL);
+  const [gruposActivos, setGruposActivos] = useState(
+    () => new Set(GRUPOS_CAPAS.filter((g) => g.visibleByDefault).map((g) => g.id)),
+  );
   const mapWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,23 +81,62 @@ export default function App() {
   );
 
   const references = useMemo(() => REFERENCE_LAYERS.filter((l) => isAvailable(l.id, l.url)), [isAvailable]);
-  const activeReferences = useMemo(() => references.filter((l) => activeRefs.has(l.id)), [references, activeRefs]);
+  /** Una capa se ve si está encendida y, si pertenece a un grupo, el grupo también lo está. */
+  const seVe = useCallback(
+    (l: LayerConfig) => activeRefs.has(l.id) && (!l.grupo || gruposActivos.has(l.grupo)),
+    [activeRefs, gruposActivos],
+  );
+  const activeReferences = useMemo(() => references.filter(seVe), [references, seVe]);
   const condicion = useMemo(() => condicionPorCampo(campo), [campo]);
 
-  // Capas disponibles en el orden del panel; null = predios de la condición activa.
+  // Elementos del panel en su orden: capas sueltas, grupos y la condición activa.
   const items = useMemo(
     () =>
       orden
-        .map((id) => (id === ID_CONDICION ? null : references.find((l) => l.id === id)))
-        .filter((l): l is LayerConfig | null => l !== undefined),
+        .map((id): ItemCapa | null => {
+          if (id === ID_CONDICION) return { tipo: 'condicion' };
+          const grupo = GRUPOS_CAPAS.find((g) => idGrupo(g.id) === id);
+          if (grupo) {
+            const capas = capasDelGrupo(grupo.id, references);
+            return capas.length ? { tipo: 'grupo', grupo, capas } : null;
+          }
+          const capa = references.find((l) => l.id === id);
+          return capa ? { tipo: 'capa', capa } : null;
+        })
+        .filter((i): i is ItemCapa => i !== null),
     [orden, references],
   );
-  const itemsLeyenda = useMemo(() => items.filter((l) => l === null || activeRefs.has(l.id)), [items, activeRefs]);
-  const ordenes = useMemo(() => Object.fromEntries(orden.map((id, i) => [id, orden.length - i])), [orden]);
+  // Leyenda: capas visibles en el orden del panel; null = predios de la condición activa.
+  const itemsLeyenda = useMemo(
+    () =>
+      items.flatMap((i): (LayerConfig | null)[] =>
+        i.tipo === 'condicion' ? [null] : i.tipo === 'grupo' ? i.capas.filter(seVe) : seVe(i.capa) ? [i.capa] : [],
+      ),
+    [items, seVe],
+  );
+  // Orden de dibujo: las capas de un grupo quedan juntas, en su orden interno.
+  const ordenes = useMemo(() => {
+    const resultado: Record<string, number> = {};
+    orden.forEach((id, i) => {
+      const valor = orden.length - i;
+      const grupo = GRUPOS_CAPAS.find((g) => idGrupo(g.id) === id);
+      if (grupo) capasDelGrupo(grupo.id, REFERENCE_LAYERS).forEach((l, j) => (resultado[l.id] = valor - j * 0.01));
+      else resultado[id] = valor;
+    });
+    return resultado;
+  }, [orden]);
 
-  /** Sube o baja una capa, intercambiándola con su vecina visible en el panel. */
+  const toggleGrupo = (id: string) =>
+    setGruposActivos((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  /** Sube o baja una capa o grupo, intercambiándolo con su vecino visible en el panel. */
   const moverCapa = (id: string, paso: -1 | 1) => {
-    const visibles = items.map((l) => l?.id ?? ID_CONDICION);
+    const visibles = items.map((i) => (i.tipo === 'condicion' ? ID_CONDICION : i.tipo === 'grupo' ? idGrupo(i.grupo.id) : i.capa.id));
     const vecina = visibles[visibles.indexOf(id) + paso];
     if (!vecina) return;
     setOrden((prev) => {
@@ -143,7 +196,9 @@ export default function App() {
               items={items}
               condicion={condicion}
               active={activeRefs}
+              gruposActivos={gruposActivos}
               onToggle={toggleRef}
+              onToggleGrupo={toggleGrupo}
               onMove={moverCapa}
             />
           )}

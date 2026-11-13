@@ -140,6 +140,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .layer-list li { display: flex; align-items: center; gap: 4px; }
 .layer-list li .toggle { flex: 1; min-width: 0; }
 .layer-list li.is-condition { background: var(--soft); border-radius: 4px; padding: 0 2px; font-weight: 600; }
+.layer-list li.layer-group { display: block; }
+.layer-group-head { display: flex; align-items: center; gap: 4px; }
+.layer-group-head .toggle { flex: 1; min-width: 0; }
+.layer-group-name { font-weight: 600; }
+.layer-group-items { list-style: none; margin: 0 0 2px; padding: 0 0 0 22px; border-left: 2px solid var(--line); margin-left: 6px; }
+/* Grupo apagado: sus capas se pueden marcar o desmarcar, pero se ven atenuadas porque no se dibujan. */
+.layer-group-items.is-off { opacity: 0.55; }
 .order-buttons { display: inline-flex; gap: 2px; flex: none; }
 .order-buttons button {
   width: 22px;
@@ -290,6 +297,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .norm-group h3 { font-size: 15px; margin: 0 0 6px; color: var(--accent); }
 .norm-section { padding: 8px 0 4px; border-top: 1px solid var(--line); }
 .norm-section h4 { font-size: 13.5px; margin: 0 0 4px; }
+.norm-definitions { --accent: var(--text); }
+.norm-formula { background: var(--soft); border-radius: 4px; padding: 6px 8px; font-weight: 600; font-size: 13px; }
+.norm-source { color: var(--muted); font-size: 12px; font-style: italic; }
 .norm-section.is-current { border-left: 3px solid var(--accent); padding-left: 10px; margin-left: -13px; }
 .meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 12px 0; }
 .meta dt { color: var(--muted); }

@@ -131,7 +131,7 @@
     {
       "id": "densidad",
       "titulo": "Densidad",
-      "introduccion": "La densidad limita cuántas viviendas se pueden construir en un terreno. El DS 68 cambia la forma de calcularla en las zonas donde el Plan Regulador la fija.",
+      "introduccion": "La densidad limita la cantidad de personas por hectárea y con ello cuántas viviendas se pueden construir en un terreno. El DS 68 cambia la forma de calcularla en las zonas donde el Plan Regulador la fija.",
       "recuadro": {
         "fondo": "#EDF7FD",
         "borde": "#A9D6F0",
@@ -207,10 +207,15 @@
               "porcentaje": 42.7,
               "texto": "Predios en zonas con densidad regulada. Para calcular el máximo de viviendas se usa el factor 2,8, que se aplica en general sin condiciones especiales.",
               "resumen": "El máximo de viviendas se calcula con el factor 2,8 (habitantes por vivienda).",
-              "ejercicio": {
-                "tipo": "densidad",
-                "factor": 2.8
-              }
+              "ejercicio": [
+                {
+                  "tipo": "densidad",
+                  "factor": 2.8
+                },
+                {
+                  "tipo": "formulaConstructibilidad"
+                }
+              ]
             },
             {
               "campo": "P4_DEN14",
@@ -220,10 +225,15 @@
               "porcentaje": 38.0,
               "texto": "Predios en zonas con densidad regulada y cercanos al transporte público (a menos de 600 m caminando de metro, a 200 m del acceso a una vía expresa o a 100 m de una vía troncal). Aquí se usa el factor 1,4, que permite más viviendas en el mismo terreno.",
               "resumen": "El máximo de viviendas se calcula con el factor 1,4 (habitantes por vivienda), que permite más viviendas.",
-              "ejercicio": {
-                "tipo": "densidad",
-                "factor": 1.4
-              }
+              "ejercicio": [
+                {
+                  "tipo": "densidad",
+                  "factor": 1.4
+                },
+                {
+                  "tipo": "formulaConstructibilidad"
+                }
+              ]
             }
           ]
         }
@@ -245,5 +255,18 @@
     "sinValorNumerico": "Esta zona no tiene un valor numérico simple; revisar caso a caso.",
     "zonaNoInformada": "Zona no informada",
     "sinNormas": "No se encontraron normas para esta zona en la tabla del Plan Regulador."
-  }
+  },
+  "definiciones": [
+    {
+      "titulo": "Coeficiente de constructibilidad",
+      "texto": "Número que, multiplicado por la superficie total del predio, descontadas de esta las áreas declaradas de utilidad pública, fija el máximo de metros cuadrados posibles de construir sobre el nivel de terreno natural.",
+      "formula": "Superficie máxima construible (m²) = superficie del predio (m²) × coeficiente de constructibilidad",
+      "fuente": "OGUC, art. 1.1.2."
+    },
+    {
+      "titulo": "Densidad bruta",
+      "texto": "Número de unidades por unidad de superficie, en que la superficie a considerar es la del predio en que se emplaza el proyecto, más la superficie exterior, hasta el eje del espacio público adyacente, sea éste existente o previsto en el Instrumento de Planificación Territorial, en una franja de un ancho máximo de 30 m.",
+      "fuente": "OGUC, art. 1.1.2."
+    }
+  ]
 }

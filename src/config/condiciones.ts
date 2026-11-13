@@ -3,7 +3,8 @@
 
 import datos from './condiciones.json';
 
-export type TipoEjercicio = 'constructibilidad' | 'altura' | 'densidad';
+/** `formulaConstructibilidad`: muestra cómo se calcula la superficie construible, sin incremento. */
+export type TipoEjercicio = 'constructibilidad' | 'altura' | 'densidad' | 'formulaConstructibilidad';
 
 export interface Ejercicio {
   tipo: TipoEjercicio;
@@ -68,6 +69,8 @@ interface Configuracion {
     nota: string;
     densidad: { factorAnterior: number; incrementoSuperficieBruta: number; rotulo: string };
   };
+  /** Definiciones que se muestran en «Referencia normativa». */
+  definiciones: { titulo: string; texto: string; formula?: string; fuente: string }[];
   textos: Record<'resumenManzanas' | 'noAplica' | 'sinValorNumerico' | 'zonaNoInformada' | 'sinNormas', string>;
 }
 
