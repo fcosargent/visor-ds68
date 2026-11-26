@@ -13,6 +13,9 @@ export async function descargarJpg(nodo: HTMLElement, nombreArchivo: string): Pr
       pixelRatio: 2,
       backgroundColor: '#ffffff',
       cacheBust: false,
+      // El visor usa solo fuentes del sistema: no hace falta incrustar fuentes web. Así además no se
+      // intenta leer hojas de estilo de otros dominios (ArcGIS en 3D), que el navegador bloquea.
+      fontEmbedCSS: '',
       filter: (n) =>
         !(
           n instanceof HTMLElement &&

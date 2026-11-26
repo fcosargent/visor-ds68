@@ -305,7 +305,7 @@ export default function App() {
           )}
           <div className="export-footer">
             {hoy()} · Fuente: {METADATA.fuenteImagen}
-            {vista === '3d' && ' · Edificaciones: © colaboradores de OpenStreetMap, Esri'}
+            {vista === '3d' && ' · Edificaciones: Esri, © OpenStreetMap'}
           </div>
           {(loading || availableFiles === undefined) && <div className={`loading ${NO_EXPORTAR}`}>Cargando…</div>}
         </div>

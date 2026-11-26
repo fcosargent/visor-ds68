@@ -58,6 +58,8 @@ const MODULOS = {
   FeatureLayer: 'layers/FeatureLayer',
   SceneLayer: 'layers/SceneLayer',
   SceneFilter: 'layers/support/SceneFilter',
+  Polygon: 'geometry/Polygon',
+  geodesicBufferOperator: 'geometry/operators/geodesicBufferOperator',
   DirectLineMeasurement3D: 'widgets/DirectLineMeasurement3D',
   AreaMeasurement3D: 'widgets/AreaMeasurement3D',
   Zoom: 'widgets/Zoom',
@@ -285,8 +287,17 @@ function capaCondicion(E: Modulos, condicion: CondicionActiva, features: Feature
   });
 }
 
-/** Edificaciones 3D, recortadas al límite comunal con un SceneFilter («contains»). */
-async function capaEdificios(E: Modulos, limite: Esri | null) {
+/**
+ * Edificaciones 3D, recortadas con un SceneFilter («contains») al límite comunal ampliado
+ * EDIFICIOS_3D.bufferRecorteMetros (ver config/layers.ts).
+ */
+async function capaEdificios(E: Modulos, limiteGeojson: Esri | null) {
+  let limite: Esri = null;
+  if (limiteGeojson) {
+    const poligono = new E.Polygon(limiteGeojson);
+    await E.geodesicBufferOperator.load?.();
+    limite = E.geodesicBufferOperator.execute(poligono, EDIFICIOS_3D.bufferRecorteMetros, { unit: 'meters' }) ?? poligono;
+  }
   const capa = new E.SceneLayer({
     url: EDIFICIOS_3D.url,
     title: 'Edificaciones 3D',
