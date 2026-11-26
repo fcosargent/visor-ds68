@@ -149,7 +149,7 @@ export const EDIFICIOS_3D = {
   /** Campos de la ventana emergente, en orden, con alias legibles. */
   campos: [
     { campo: 'height', alias: 'Altura (m)' },
-    { campo: 'building_levels', alias: 'Pisos' },
+    { campo: 'building_levels', alias: 'Pisos informados por la fuente' },
     { campo: 'name', alias: 'Nombre' },
     { campo: 'building', alias: 'Tipo de edificación' },
     { campo: 'source', alias: 'Fuente del dato' },
@@ -175,7 +175,15 @@ export const EDIFICIOS_3D = {
   /** Atribución publicada por Esri en la ficha del ítem. */
   atribucion:
     'Fuentes de la capa según Esri: TomTom, Maxar, Esri Community Maps, © colaboradores de OpenStreetMap (ODbL), Microsoft y Google Open Buildings (CC BY 4.0).',
-  nota: 'Altura referencial: cuando la fuente no la informa, el volumen usa un valor por defecto.',
+  /** Altura de piso de referencia para los «pisos aproximados» (definida por el Departamento). */
+  alturaPiso: 3,
+  nota:
+    'Altura y número de pisos referenciales, calculados en el punto pinchado (pisos ≈ altura ÷ 3,0 m). ' +
+    'Para medir una altura, usa la herramienta Distancia y mide la vertical. ' +
+    'Cuando la fuente no informa la altura, el volumen usa un valor por defecto.',
+  /** Nota cuando el objeto agrupa varios volúmenes de distinta altura. */
+  notaConjunto:
+    'Esta edificación agrupa varios volúmenes adosados: el resaltado marca el conjunto completo y el punto coral, el lugar medido.',
 };
 
 const ESTACIONES_URL = `${DATA}estaciones_metro.geojson`;

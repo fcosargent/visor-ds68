@@ -8,6 +8,8 @@ import { createPortal } from 'react-dom';
 import type { Feature, Geometry, Position } from 'geojson';
 import { EDIFICIOS_3D, MAPA_BASE_3D, PREDIOS_URL, REFERENCE_LAYERS, type LayerConfig } from '../config/layers';
 import { crearIndice, type IndicePredios } from '../lib/indicePredios';
+import { alturaEnPunto, type AlturaPunto } from '../lib/alturaVolumen';
+import { capaNombresCalles } from '../lib/callesSuelo';
 import { METADATA } from '../config/metadata';
 import { colorRelleno, type CondicionActiva } from '../config/condiciones';
 import { importar, type Esri } from '../lib/arcgis';
@@ -92,8 +94,8 @@ const BORDE_EDIFICIO = { type: 'solid', color: [80, 86, 92, 0.55], size: 0.6 };
 const ESPERA_COLOREADO_MS = 500;
 /** Edificios por consulta de geometría al clasificar. */
 const LOTE_CLASIFICACION = 250;
-/** Escala desde la que se muestran los nombres de calles (equivale aprox. al zoom 16 del 2D). */
-const ESCALA_NOMBRES_CALLES = 12000;
+/** Línea vertical que marca dónde se midió la altura de un edificio (coral del Observatorio). */
+const COLOR_MEDICION = [234, 104, 78, 1];
 const SR_WGS84 = { wkid: 4326 };
 
 const MODULOS = {
@@ -105,7 +107,14 @@ const MODULOS = {
   FeatureLayer: 'layers/FeatureLayer',
   SceneLayer: 'layers/SceneLayer',
   SceneFilter: 'layers/support/SceneFilter',
+  MediaLayer: 'layers/MediaLayer',
+  ImageElement: 'layers/support/ImageElement',
+  ExtentAndRotationGeoreference: 'layers/support/ExtentAndRotationGeoreference',
+  Extent: 'geometry/Extent',
+  Graphic: 'Graphic',
   Polygon: 'geometry/Polygon',
+  Point: 'geometry/Point',
+  Polyline: 'geometry/Polyline',
   webMercatorUtils: 'geometry/support/webMercatorUtils',
   geodesicBufferOperator: 'geometry/operators/geodesicBufferOperator',
   DirectLineMeasurement3D: 'widgets/DirectLineMeasurement3D',
@@ -183,7 +192,6 @@ function capaEntidades(
     atributos?: (props: Record<string, unknown>) => Record<string, unknown>;
     campos?: { name: string; type: string }[];
     popup?: { titulo: (p: Record<string, unknown>) => string; html: (p: Record<string, unknown>) => string };
-    etiquetas?: Esri[];
   },
 ) {
   const props: Record<string, unknown>[] = [];
@@ -209,8 +217,6 @@ function capaEntidades(
     spatialReference: SR_WGS84,
     renderer: opciones.renderer,
     elevationInfo: { mode: 'on-the-ground' },
-    labelingInfo: opciones.etiquetas,
-    labelsVisible: Boolean(opciones.etiquetas),
     popupEnabled: Boolean(popup),
     outFields: ['*'],
     popupTemplate: popup
@@ -229,9 +235,6 @@ function rendererReferencia(config: LayerConfig): Esri {
   const estiloLinea = s.dashArray ? 'dash' : 'solid';
   // ArcGIS mide en puntos (1 pt ≈ 1,33 px).
   const pt = (px: number) => px * 0.75;
-  if (config.type === 'label') {
-    return { type: 'simple', symbol: { type: 'simple-marker', size: 0, color: [0, 0, 0, 0], outline: { width: 0 } } };
-  }
   if (config.type === 'point') {
     return {
       type: 'simple',
@@ -260,30 +263,6 @@ function rendererReferencia(config: LayerConfig): Esri {
   };
 }
 
-/** Nombres de calles: puntos invisibles con su etiqueta (en 3D las etiquetas no se giran). */
-function etiquetasCalles(config: LayerConfig): Esri[] {
-  return [
-    {
-      labelExpressionInfo: { expression: '$feature.nombre' },
-      // Sobre el terreno ArcGIS solo admite etiquetas centradas en el punto.
-      labelPlacement: 'center-center',
-      minScale: ESCALA_NOMBRES_CALLES,
-      symbol: {
-        type: 'label-3d',
-        symbolLayers: [
-          {
-            type: 'text',
-            material: { color: rgba(config.style.color) },
-            halo: { color: [255, 255, 255, 0.9], size: 1 },
-            font: { weight: 'bold' },
-            size: 8,
-          },
-        ],
-      },
-    },
-  ];
-}
-
 const ESCAPAR: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const escapar = (s: string) => s.replace(/[&<>"']/g, (c) => ESCAPAR[c]);
 
@@ -297,9 +276,6 @@ function capaReferencia(E: Modulos, config: LayerConfig, features: Feature[]) {
   return capaEntidades(E, lista, {
     titulo: config.label,
     renderer: rendererReferencia(config),
-    campos: config.type === 'label' ? [{ name: 'nombre', type: 'string' }] : undefined,
-    atributos: config.type === 'label' ? (p) => ({ nombre: String(p.nombre ?? '') }) : undefined,
-    etiquetas: config.type === 'label' ? etiquetasCalles(config) : undefined,
     popup: ficha
       ? { titulo: () => config.label, html: (p) => fichaPopup(ficha, p) }
       : tooltip
@@ -435,9 +411,15 @@ async function capaMapaBase3d(E: Modulos, config: LayerConfig): Promise<Esri> {
 
 /**
  * Edificaciones 3D, recortadas con un SceneFilter («contains») al límite comunal ampliado.
- * `enCondicion` dice si el edificio quedó clasificado en un predio de la condición activa.
+ * `enCondicion` dice si el edificio quedó clasificado en un predio de la condición activa y `medir`
+ * calcula la altura del volumen pinchado (ver lib/alturaVolumen.ts).
  */
-async function capaEdificios(E: Modulos, enCondicion: (oid: number) => string | null, bordes: boolean) {
+async function capaEdificios(
+  E: Modulos,
+  enCondicion: (oid: number) => string | null,
+  medir: (oid: number) => Promise<AlturaPunto | null>,
+  bordes: boolean,
+) {
   const capa = new E.SceneLayer({
     url: EDIFICIOS_3D.url,
     title: 'Edificaciones 3D',
@@ -464,19 +446,39 @@ async function capaEdificios(E: Modulos, enCondicion: (oid: number) => string | 
   capa.popupTemplate = {
     title: (e: Esri) => String(e.graphic?.attributes?.name || 'Edificación'),
     outFields: ['ObjectID', ...campos.map((c) => c.campo)],
-    content: (e: Esri) => {
+    content: async (e: Esri) => {
       const at = e.graphic?.attributes ?? {};
-      const condicion = typeof at.ObjectID === 'number' ? enCondicion(at.ObjectID) : null;
+      const oid = typeof at.ObjectID === 'number' ? at.ObjectID : null;
+      const condicion = oid != null ? enCondicion(oid) : null;
+      // Altura por defecto (3 m sin pisos): no es una medición, así que tampoco se calculan pisos.
+      const alturaConjunto = Number(at.height);
+      const sinAltura = alturaConjunto === EDIFICIOS_3D.alturaPorDefecto && !(Number(at.building_levels) > 0);
+      const punto = oid != null && !sinAltura ? await medir(oid).catch(() => null) : null;
+      const filasAltura: (readonly [string, string | null])[] = punto
+        ? [
+            ['Altura en el punto pinchado', `${formatearNumero(punto.altura, 1)} m`],
+            ['Pisos aproximados', formatearNumero(Math.max(1, Math.round(punto.altura / EDIFICIOS_3D.alturaPiso)), 0)],
+            // Se muestra la del conjunto solo si es distinta (el campo de la capa es la máxima).
+            [
+              'Altura máxima del conjunto',
+              Math.abs(alturaConjunto - punto.altura) >= 1 ? valor('height', at.height, at) : null,
+            ],
+          ]
+        : [['Altura', valor('height', at.height, at)]];
       const filas = [
-        ...campos.map((c) => [c.alias.replace(' (m)', ''), valor(c.campo, at[c.campo], at)] as const),
+        ...filasAltura,
+        ...campos
+          .filter((c) => c.campo !== 'height')
+          .map((c) => [c.alias, valor(c.campo, at[c.campo], at)] as const),
         ['Capa', EDIFICIOS_3D.nombreCapa] as const,
         ['Condición activa', condicion ? `En predio de «${condicion}»` : 'No está en predios de la condición'] as const,
       ]
         .filter(([, v]) => v !== null)
         .map(([a, v]) => `<tr><th>${escapar(a)}</th><td>${escapar(v!)}</td></tr>`)
         .join('');
+      const notaConjunto = punto?.conjunto ? `<p class="popup-note">${escapar(EDIFICIOS_3D.notaConjunto)}</p>` : '';
       return contenidoHtml(
-        `<div class="popup popup-ficha"><table class="popup-table">${filas}</table>` +
+        `<div class="popup popup-ficha"><table class="popup-table">${filas}</table>${notaConjunto}` +
           `<p class="popup-note">${escapar(EDIFICIOS_3D.nota)} ${escapar(EDIFICIOS_3D.atribucion)}</p></div>`,
       );
     },
@@ -525,6 +527,8 @@ export default function SceneView3D({
   const viewRef = useRef<Esri>(null);
   const condicionRef = useRef<{ id: string; layer: Esri } | null>(null);
   const refsRef = useRef(new Map<string, { id: string; layer: Esri }>());
+  /** Vigilantes que hay que soltar al sacar una capa (nombres de calles). */
+  const limpiezaRef = useRef(new Map<string, () => void>());
   const activeIdsRef = useRef(new Set<string>());
   const pendingRef = useRef(0);
   const normasRef = useRef(normas);
@@ -627,6 +631,70 @@ export default function SceneView3D({
         if (cambios && edificiosRef.current === capa) capa.renderer = rendererEdificios(colores, modoRef.current.bordes);
       })
       .catch((err) => console.warn(`[Visor DS 68] No se pudieron colorear los edificios: ${String(err)}`));
+  };
+
+  // ── Altura del volumen pinchado ────────────────────────────────────────────────────
+  // Cada clic guarda su hitTest; la ventana del edificio lo usa para medir el techo bajo ese punto
+  // y se marca el lugar medido (línea vertical y punto coral en el techo), que se borra al cerrar la
+  // ventana.
+  const clicRef = useRef<Promise<Esri> | null>(null);
+  const lineaRef = useRef<Esri[]>([]);
+
+  const quitarLinea = () => {
+    const view = viewRef.current;
+    if (lineaRef.current.length && view) view.graphics.removeMany(lineaRef.current);
+    lineaRef.current = [];
+  };
+
+  const medirVolumen = async (oid: number): Promise<AlturaPunto | null> => {
+    const view = viewRef.current;
+    const E = esriRef.current;
+    const capa = edificiosRef.current;
+    if (!view || !E || !capa || !clicRef.current) return null;
+    const hit = await clicRef.current;
+    const r = hit?.results?.find((x: Esri) => x.graphic?.attributes?.ObjectID === oid);
+    const p = r?.mapPoint;
+    if (!p) return null;
+    const lv = await view.whenLayerView(capa);
+    const suelo = (pt: Esri): number | null => {
+      const z = view.groundView?.elevationSampler?.queryElevation(pt)?.z;
+      return typeof z === 'number' ? z : null;
+    };
+    const cam = view.camera.position;
+    const medida = await alturaEnPunto(lv, oid, { x: p.x, y: p.y, z: p.z }, suelo(p), { x: cam.x, y: cam.y });
+    quitarLinea();
+    if (medida) {
+      const base = suelo(new E.Point({ x: medida.x, y: medida.y, spatialReference: p.spatialReference })) ?? suelo(p) ?? 0;
+      const sr = p.spatialReference;
+      lineaRef.current = [
+        new E.Graphic({
+          geometry: new E.Polyline({
+            paths: [[[medida.x, medida.y, base], [medida.x, medida.y, base + medida.altura]]],
+            hasZ: true,
+            spatialReference: sr,
+          }),
+          symbol: { type: 'line-3d', symbolLayers: [{ type: 'line', size: 3, material: { color: COLOR_MEDICION } }] },
+        }),
+        // Punto en el techo medido (la línea queda dentro del volumen y a veces no se distingue).
+        new E.Graphic({
+          geometry: new E.Point({ x: medida.x, y: medida.y, z: base + medida.altura + 0.3, spatialReference: sr }),
+          symbol: {
+            type: 'point-3d',
+            symbolLayers: [
+              {
+                type: 'icon',
+                resource: { primitive: 'circle' },
+                size: 11,
+                material: { color: COLOR_MEDICION },
+                outline: { color: [255, 255, 255, 1], size: 1.5 },
+              },
+            ],
+          },
+        }),
+      ];
+      view.graphics.addMany(lineaRef.current);
+    }
+    return medida;
   };
 
   const desvincularEdificios = () => {
@@ -776,6 +844,20 @@ export default function SceneView3D({
             manijaModo.remove();
           },
         });
+        // Altura del volumen pinchado: se guarda el hitTest de cada clic (ver medirVolumen).
+        manijas.push(
+          view.on('click', (ev: Esri) => {
+            quitarLinea();
+            const capa = edificiosRef.current;
+            clicRef.current = capa ? view.hitTest(ev, { include: [capa] }).catch(() => null) : null;
+          }),
+          E.reactiveUtils.watch(
+            () => view.popup?.visible,
+            (visible: boolean) => {
+              if (!visible) quitarLinea();
+            },
+          ),
+        );
         cb.current.registrarCaptura(async () => (await view.takeScreenshot({ format: 'png' })).dataUrl);
         if (import.meta.env.DEV) (window as unknown as { __escena: Esri }).__escena = view;
         setLista(true);
@@ -791,6 +873,10 @@ export default function SceneView3D({
       manijas.forEach((m) => m.remove());
       cb.current.registrarCaptura(null);
       desvincularEdificios();
+      limpiezaRef.current.forEach((quitar) => quitar());
+      limpiezaRef.current.clear();
+      lineaRef.current = [];
+      clicRef.current = null;
       view?.destroy();
       viewRef.current = null;
       condicionRef.current = null;
@@ -846,18 +932,37 @@ export default function SceneView3D({
     for (const [id, active] of refsRef.current) {
       if (!wanted.has(id)) {
         if (active.layer === edificiosRef.current) desvincularEdificios();
+        limpiezaRef.current.get(id)?.();
+        limpiezaRef.current.delete(id);
         view.map.remove(active.layer);
         refsRef.current.delete(id);
       }
     }
     for (const config of references) {
       if (refsRef.current.has(config.id)) continue;
-      const crear =
+      const crear: Promise<Esri> =
         config.escena3d === 'edificios'
-          ? capaEdificios(E, (oid) => (coloresRef.current.has(oid) ? condicionActRef.current.nombre : null), modoRef.current.bordes)
+          ? capaEdificios(
+              E,
+              (oid) => (coloresRef.current.has(oid) ? condicionActRef.current.nombre : null),
+              medirVolumen,
+              modoRef.current.bordes,
+            )
           : config.escena3d
             ? capaMapaBase3d(E, config)
-            : loadGeoJSON(config.url).then((data) => capaReferencia(E, config, data.features));
+            : config.type === 'label'
+              ? // Nombres de calles: pegados al suelo sobre el eje (ver lib/callesSuelo.ts).
+                loadGeoJSON(config.url).then((data) => {
+                  const { layer, quitar } = capaNombresCalles(E, view, data.features, {
+                    titulo: config.label,
+                    color: config.style.color,
+                    esperaMs: ESPERA_COLOREADO_MS,
+                  });
+                  limpiezaRef.current.get(config.id)?.();
+                  limpiezaRef.current.set(config.id, quitar);
+                  return layer;
+                })
+              : loadGeoJSON(config.url).then((data) => capaReferencia(E, config, data.features));
       track(crear)
         .then((layer) => {
           if (!viewRef.current || !activeIdsRef.current.has(config.id) || refsRef.current.has(config.id)) return;
