@@ -28,7 +28,9 @@ Ocho condiciones, organizadas en dos grupos. Se ve una condición a la vez.
   - Conjunto Armónico va en `#FF7F7F`, incluida P5. Si alguna condición necesitara un color propio, se indica con la propiedad `relleno` de esa condición en `condiciones.json`.
   - Densidad se colorea por valor único de `DENSIDAD`, con una rampa azul de casi blanco a azul pizarra; los tonos oscuros son poco saturados para que se distingan los deslindes. El valor 0 o vacío iría en gris, con la etiqueta «Sin densidad máxima definida», pero ningún predio de P4 lo tiene.
   - Contornos: Conjunto Armónico y la capa «Predios de la comuna» usan casi negro (`#1A1A1A`) de 0,25 px; Densidad usa gris claro (`#A3ACB6`) de 0,5 px, para que los deslindes se vean sobre los azules oscuros. En la leyenda y el panel de capas, la muestra lleva un contorno mínimo de 0,5 px.
-- **Mover y cambiar el tamaño:** el resumen y la leyenda se arrastran a cualquier parte del mapa y se agrandan o achican desde su esquina inferior derecha (todo el contenido escala junto). Doble clic los devuelve a su posición y tamaño iniciales. La imagen exportada los incluye tal como están.
+- **Mover y cambiar el tamaño:** el resumen y la leyenda se arrastran a cualquier parte del mapa y se agrandan o achican desde su esquina inferior derecha (todo el contenido escala junto). Doble clic los devuelve a su posición y tamaño iniciales. La imagen exportada los incluye tal como están (un cuadro cerrado no aparece; uno minimizado sale como barra).
+- **Minimizar y cerrar:** el resumen y la leyenda tienen botones «–» (minimizar a una barra con su título; clic en la barra para expandir) y «×» (cerrar). Un cuadro cerrado vuelve a aparecer al cambiar de condición o con el botón «Mostrar condición» / «Mostrar leyenda»; uno minimizado se mantiene minimizado con el título nuevo.
+- **Celular (≤ 768 px):** los cuadros son más pequeños, la descripción de la condición queda tras «Ver descripción», la leyenda parte minimizada y los botones tienen un área táctil de 40 × 40 px. El punto de corte está en `src/lib/pantalla.ts` y en `styles.css`.
 - **Capas de referencia:**
   - Al abrir, solo están encendidos el límite comunal y los nombres de calles.
   - Los botones ▲ ▼ suben o bajan cada capa; las de más arriba se dibujan encima. Los predios de la condición seleccionada también se pueden mover. Los nombres de calles siempre quedan sobre todo lo demás.
@@ -155,6 +157,6 @@ Cada cambio en la rama `main` se compila y se publica solo, mediante el flujo `.
 - `v1-antes-actualizacion`: antes de las 7 condiciones.
 - `v2-antes-nov2026`: antes de `predios_zona_oct_2026_norma`.
 - `v3-antes-p5`: antes de la condición P5 y de la vialidad corregida (de 1.245 a 1.235 segmentos).
-- `v4-antes-incentivos`: antes del grupo de incentivos y las fichas de ZCH.
+- `v4-antes-incentivos`, `v5-antes-cuadros`: antes del grupo de incentivos y las fichas de ZCH.
 
 El sitio es público. `index.html` pide a los buscadores que no lo indexen (`noindex`).

@@ -1,6 +1,7 @@
 import type { LayerConfig } from '../config/layers';
 import { colorRelleno, type CondicionActiva } from '../config/condiciones';
 import { formatNumber } from '../lib/data';
+import { esPantallaMovil } from '../lib/pantalla';
 import FloatingPanel from './FloatingPanel';
 import Swatch from './Swatch';
 
@@ -47,7 +48,17 @@ export default function MapLegend({ condicion, items, valoresClase }: Props) {
   );
 
   return (
-    <FloatingPanel className="map-legend" ariaLabel="Leyenda" inicial={{ left: 10, bottom: 24 }} anchoBase={270}>
+    <FloatingPanel
+      className="map-legend"
+      ariaLabel="Leyenda"
+      inicial={{ left: 10, bottom: 24 }}
+      anchoBase={270}
+      tituloBarra="Leyenda"
+      etiquetaReabrir="Mostrar leyenda"
+      claveReapertura={condicion.campo}
+      // En celular la leyenda parte minimizada.
+      minimizadoInicial={esPantallaMovil()}
+    >
       <h3>Leyenda</h3>
       <ul>
         {items.map((layer) =>
