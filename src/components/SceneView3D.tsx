@@ -62,7 +62,11 @@ function modoDibujo(calidad: Calidad, movil: boolean, zoom: number, cercaAntes: 
   const perfil = movil ? 'low' : calidad === 'alta' ? 'medium' : cerca ? 'low' : 'medium';
   return { cerca, perfil, bordes: cerca };
 }
-const CLAVE_CALIDAD = 'ds68-calidad-3d';
+/**
+ * Clave nueva («-v2»): la versión anterior guardaba «alta» al abrir la vista aunque nadie la eligiera,
+ * así que ese valor antiguo se ignora.
+ */
+const CLAVE_CALIDAD = 'ds68-calidad-3d-v2';
 function leerCalidad(): Calidad {
   try {
     return localStorage.getItem(CLAVE_CALIDAD) === 'alta' ? 'alta' : 'auto';
@@ -914,12 +918,20 @@ export default function SceneView3D({
   useEffect(() => {
     const view = viewRef.current;
     if (lista && view) aplicarModo();
-    try {
-      if (!movil) localStorage.setItem(CLAVE_CALIDAD, calidad);
-    } catch {
-      /* sin almacenamiento: se usa el valor por defecto */
-    }
-  }, [calidad, lista, movil]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calidad, lista]);
+
+  /** La preferencia se guarda solo cuando el usuario pulsa el botón (no al abrir la vista). */
+  const cambiarCalidad = () =>
+    setCalidad((c) => {
+      const nueva: Calidad = c === 'alta' ? 'auto' : 'alta';
+      try {
+        localStorage.setItem(CLAVE_CALIDAD, nueva);
+      } catch {
+        /* sin almacenamiento: se usa el valor por defecto */
+      }
+      return nueva;
+    });
 
   return (
     <>
@@ -962,7 +974,7 @@ export default function SceneView3D({
                     ? 'Calidad alta siempre (más detalle, menos fluida). Clic para calidad automática'
                     : 'Calidad automática: más fluida de cerca y completa de lejos. Clic para calidad alta siempre'
                 }
-                onClick={() => setCalidad((c) => (c === 'alta' ? 'auto' : 'alta'))}
+                onClick={cambiarCalidad}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   {/* Velocímetro: modo rápido */}
