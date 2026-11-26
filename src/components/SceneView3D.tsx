@@ -37,6 +37,21 @@ interface Props {
 }
 
 type Herramienta = 'distancia' | 'area' | null;
+type Calidad = 'rapida' | 'alta';
+
+/**
+ * Perfil de calidad del SceneView. «low» es mucho más fluido, pero con la cámara lejos (vista de
+ * toda la comuna) no carga los edificios; por eso en escritorio la calidad por defecto es «alta».
+ */
+const PERFIL_CALIDAD: Record<Calidad, string> = { rapida: 'low', alta: 'medium' };
+const CLAVE_CALIDAD = 'ds68-calidad-3d';
+function leerCalidad(): Calidad {
+  try {
+    return localStorage.getItem(CLAVE_CALIDAD) === 'rapida' ? 'rapida' : 'alta';
+  } catch {
+    return 'alta';
+  }
+}
 
 /** Inclinación de la cámara al abrir (0 = vista cenital). */
 const INCLINACION = 55;
@@ -44,10 +59,16 @@ const INCLINACION = 55;
 const ZOOM_COMUNA = 14;
 /** Los predios se dibujan algo más transparentes que en 2D, para distinguirlos bajo los edificios. */
 const FACTOR_OPACIDAD_3D = 0.8;
-/** Opacidad de los volúmenes de edificios. */
-const OPACIDAD_EDIFICIOS = 0.75;
-/** Los edificios en predios de la condición van casi opacos, para que su color se lea bien. */
-const OPACIDAD_EDIFICIOS_CONDICION = 0.95;
+/**
+ * Rendimiento (mediciones en el README): los edificios van opacos y sin bordes. Los bordes
+ * restaban cerca de un tercio de los cuadros por segundo, y la transparencia ya no hace falta
+ * porque los edificios toman el color de la condición.
+ */
+const COLOR_EDIFICIO_GRIS = [232, 233, 236, 1];
+/** Espera tras detenerse la cámara antes de clasificar los edificios nuevos. */
+const ESPERA_COLOREADO_MS = 500;
+/** Edificios por consulta de geometría al clasificar. */
+const LOTE_CLASIFICACION = 250;
 /** Escala desde la que se muestran los nombres de calles (equivale aprox. al zoom 16 del 2D). */
 const ESCALA_NOMBRES_CALLES = 12000;
 const SR_WGS84 = { wkid: 4326 };
@@ -291,25 +312,19 @@ function capaCondicion(E: Modulos, condicion: CondicionActiva, features: Feature
   });
 }
 
-/** Volumen de edificio: gris algo transparente (deja ver los predios) o con el color de la condición. */
+/** Volumen de edificio, gris o con el color de la condición (opaco y sin bordes, por rendimiento). */
 const simboloEdificio = (color: number[]) => ({
   type: 'mesh-3d',
-  symbolLayers: [
-    {
-      type: 'fill',
-      material: { color, colorMixMode: 'replace' },
-      edges: { type: 'solid', color: [80, 86, 92, 0.55], size: 0.6 },
-    },
-  ],
+  symbolLayers: [{ type: 'fill', material: { color, colorMixMode: 'replace' } }],
 });
-const SIMBOLO_EDIFICIO_GRIS = simboloEdificio([238, 239, 241, OPACIDAD_EDIFICIOS]);
+const SIMBOLO_EDIFICIO_GRIS = simboloEdificio(COLOR_EDIFICIO_GRIS);
 
 /** Renderer de los edificios: gris, salvo los clasificados en un predio de la condición (por ObjectID). */
 function rendererEdificios(colores: Map<number, string>): Esri {
   const simbolos = new Map<string, Esri>();
   const infos: Esri[] = [];
   for (const [oid, color] of colores) {
-    if (!simbolos.has(color)) simbolos.set(color, simboloEdificio(rgba(color, OPACIDAD_EDIFICIOS_CONDICION)));
+    if (!simbolos.has(color)) simbolos.set(color, simboloEdificio(rgba(color, 1)));
     infos.push({ value: oid, symbol: simbolos.get(color) });
   }
   return { type: 'unique-value', field: 'ObjectID', defaultSymbol: SIMBOLO_EDIFICIO_GRIS, uniqueValueInfos: infos };
@@ -490,6 +505,11 @@ export default function SceneView3D({
   const [herramienta, setHerramienta] = useState<Herramienta>(null);
   const [textoPendiente, setTextoPendiente] = useState<string | null>(null);
   const [nodoPendiente, setNodoPendiente] = useState<HTMLDivElement | null>(null);
+  // Calidad gráfica: «alta» (medium) por defecto en escritorio; «rápida» (low) siempre en celular
+  // y como opción en escritorio. Se recuerda en este navegador.
+  const [movil] = useState(esPantallaMovil);
+  const [calidad, setCalidad] = useState<Calidad>(() => (movil ? 'rapida' : leerCalidad()));
+  const calidadInicialRef = useRef(calidad);
 
   const track = <T,>(p: Promise<T>) => {
     pendingRef.current += 1;
@@ -535,21 +555,33 @@ export default function SceneView3D({
         const indiceActual = indiceRef.current;
         if (!indiceActual) return;
         const lv = await view.whenLayerView(capa);
-        const { features } = await lv.queryFeatures({ returnGeometry: true, outFields: ['ObjectID'] });
-        if (colores !== coloresRef.current) return;
+        // Rendimiento: primero solo los identificadores (≈ 10 ms para 8.000 edificios) y luego la
+        // geometría únicamente de los edificios nuevos. Pedir todas las mallas costaba ≈ 650 ms por pasada.
+        const ids: number[] = await lv.queryObjectIds({});
+        const nuevos = ids.filter((id) => !revisados.has(id));
         let cambios = reiniciar;
         const cond = condicionActRef.current;
-        for (const f of features) {
-          const oid = f.attributes?.ObjectID;
-          if (typeof oid !== 'number' || revisados.has(oid)) continue;
-          revisados.add(oid);
-          const c = f.geometry?.extent?.center;
-          if (!c) continue;
-          const [x, y] = c.spatialReference?.isWGS84 ? [c.x, c.y] : E.webMercatorUtils.xyToLngLat(c.x, c.y);
-          const predio = indiceActual.buscar(x, y);
-          if (predio) {
-            colores.set(oid, colorRelleno(cond, predio.d));
-            cambios = true;
+        // En lotes chicos y cediendo el turno entre lotes, para no trabar la pantalla; si la cámara
+        // se vuelve a mover, se interrumpe y lo pendiente se clasifica en la próxima parada.
+        for (let i = 0; i < nuevos.length; i += LOTE_CLASIFICACION) {
+          if (i > 0) {
+            await new Promise((r) => setTimeout(r, 0));
+            if (!view.stationary) break;
+          }
+          const lote = nuevos.slice(i, i + LOTE_CLASIFICACION);
+          const { features } = await lv.queryFeatures({ objectIds: lote, returnGeometry: true, outFields: ['ObjectID'] });
+          if (colores !== coloresRef.current) return;
+          for (const id of lote) revisados.add(id);
+          for (const f of features) {
+            const oid = f.attributes?.ObjectID;
+            const c = f.geometry?.extent?.center;
+            if (typeof oid !== 'number' || !c) continue;
+            const [x, y] = c.spatialReference?.isWGS84 ? [c.x, c.y] : E.webMercatorUtils.xyToLngLat(c.x, c.y);
+            const predio = indiceActual.buscar(x, y);
+            if (predio) {
+              colores.set(oid, colorRelleno(cond, predio.d));
+              cambios = true;
+            }
           }
         }
         if (cambios && edificiosRef.current === capa) capa.renderer = rendererEdificios(colores);
@@ -572,13 +604,28 @@ export default function SceneView3D({
     colorearEdificios(true);
     view.whenLayerView(capa).then((lv: Esri) => {
       if (edificiosRef.current !== capa) return;
-      // Cada vez que la escena termina de cargar edificios, se clasifican los nuevos.
-      manijaEdificiosRef.current = E.reactiveUtils.watch(
-        () => lv.updating,
-        (actualizando: boolean) => {
-          if (!actualizando) colorearEdificios();
+      // Los edificios nuevos se clasifican solo con la cámara detenida, tras una breve espera: al
+      // detenerse (con lo ya cargado) y otra vez cuando la escena termina de cargar. Así el
+      // coloreado (y el cambio de renderer) nunca interrumpe el desplazamiento.
+      let espera: ReturnType<typeof setTimeout> | undefined;
+      const manija = E.reactiveUtils.watch(
+        () => [view.stationary, lv.updating],
+        ([quieta]: [boolean, boolean]) => {
+          clearTimeout(espera);
+          if (quieta)
+            espera = setTimeout(() => {
+              if (view.stationary) colorearEdificios();
+            }, ESPERA_COLOREADO_MS);
         },
+        // También al inicio: la cámara puede estar quieta desde antes de vincular la capa.
+        { initial: true },
       );
+      manijaEdificiosRef.current = {
+        remove: () => {
+          clearTimeout(espera);
+          manija.remove();
+        },
+      };
     });
   };
 
@@ -621,7 +668,7 @@ export default function SceneView3D({
           map: new E.Map({ basemap: new E.Basemap({ baseLayers: [capaBase] }), ground: 'world-elevation' }),
           center: [lon, lat],
           zoom: encuadreInicial?.zoom ?? METADATA.vistaInicial.zoom,
-          qualityProfile: esPantallaMovil() ? 'low' : 'medium',
+          qualityProfile: PERFIL_CALIDAD[calidadInicialRef.current],
           environment: { starsEnabled: false },
           ui: { components: ['attribution'] },
           popup: { dockEnabled: false, defaultPopupTemplateEnabled: false },
@@ -801,6 +848,16 @@ export default function SceneView3D({
 
   const alternar = (h: Exclude<Herramienta, null>) => setHerramienta((actual) => (actual === h ? null : h));
 
+  useEffect(() => {
+    const view = viewRef.current;
+    if (lista && view && view.qualityProfile !== PERFIL_CALIDAD[calidad]) view.qualityProfile = PERFIL_CALIDAD[calidad];
+    try {
+      if (!movil) localStorage.setItem(CLAVE_CALIDAD, calidad);
+    } catch {
+      /* sin almacenamiento: se usa el valor por defecto */
+    }
+  }, [calidad, lista, movil]);
+
   return (
     <>
       <div ref={containerRef} className={`map scene-3d ${NO_EXPORTAR}`} role="application" aria-label="Escena 3D" />
@@ -832,6 +889,26 @@ export default function SceneView3D({
               </svg>
               <span>Área</span>
             </button>
+            {!movil && (
+              <button
+                type="button"
+                className={`scene-quality${calidad === 'rapida' ? ' is-active' : ''}`}
+                aria-pressed={calidad === 'rapida'}
+                title={
+                  calidad === 'alta'
+                    ? 'Calidad alta. Clic para calidad rápida: más fluida, pero de lejos no se muestran los edificios'
+                    : 'Calidad rápida: más fluida, pero de lejos no se muestran los edificios. Clic para calidad alta'
+                }
+                onClick={() => setCalidad((c) => (c === 'alta' ? 'rapida' : 'alta'))}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  {/* Velocímetro: modo rápido */}
+                  <path d="M4 16a8 8 0 0 1 16 0" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M12 16l4.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+                <span>Calidad {calidad === 'alta' ? 'alta' : 'rápida'}</span>
+              </button>
+            )}
           </div>,
           barra,
         )}
