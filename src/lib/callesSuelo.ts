@@ -15,10 +15,15 @@ import type { Esri } from './arcgis';
 export const ESCALA_NOMBRES_CALLES = 5000;
 /** Radio (m) alrededor del centro de la vista en que se dibujan etiquetas. */
 const RADIO_METROS = 1300;
-/** Alto de la etiqueta sobre el suelo, en metros (incluye el margen del halo). */
-const ALTO_METROS = 9;
-/** Resolución del texto en el canvas. */
-const PX = 48;
+/**
+ * Alto de la etiqueta sobre el suelo, en metros, incluido el halo: con 8 m la letra mide ≈ 5,3 m
+ * (antes 9 m y letra de ≈ 7 m, que se veía muy grande de cerca).
+ */
+const ALTO_METROS = 8;
+/** Resolución del texto en el canvas (más alta que antes para que la letra chica se vea nítida). */
+const PX = 64;
+/** Grosor del halo blanco a cada lado de la letra, en px del canvas (≈ 16 % de la letra). */
+const HALO_PX = 10;
 const R_TIERRA = 6378137;
 
 interface Etiqueta {
@@ -42,16 +47,20 @@ function imagenTexto(texto: string, color: string): HTMLCanvasElement {
   const ctx = canvas.getContext('2d')!;
   const fuente = `bold ${PX}px Arial, Helvetica, sans-serif`;
   ctx.font = fuente;
-  canvas.width = Math.ceil(ctx.measureText(texto).width) + 16;
-  canvas.height = Math.round(PX * 1.3);
+  // Margen del tamaño del halo, para que no se corte en los bordes.
+  const margen = HALO_PX + 2;
+  canvas.width = Math.ceil(ctx.measureText(texto).width) + 2 * margen;
+  canvas.height = Math.round(PX * 1.2) + 2 * HALO_PX;
   ctx.font = fuente;
   ctx.textBaseline = 'middle';
   ctx.lineJoin = 'round';
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
-  ctx.lineWidth = 9;
-  ctx.strokeText(texto, 8, canvas.height / 2);
+  // Halo blanco opaco bajo la letra: se nota sobre áreas verdes y predios de color (sobre la calle,
+  // que es casi blanca, se confunde con el fondo).
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2 * HALO_PX;
+  ctx.strokeText(texto, margen, canvas.height / 2);
   ctx.fillStyle = color;
-  ctx.fillText(texto, 8, canvas.height / 2);
+  ctx.fillText(texto, margen, canvas.height / 2);
   return canvas;
 }
 

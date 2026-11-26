@@ -175,10 +175,13 @@ export const EDIFICIOS_3D = {
   /** Atribución publicada por Esri en la ficha del ítem. */
   atribucion:
     'Fuentes de la capa según Esri: TomTom, Maxar, Esri Community Maps, © colaboradores de OpenStreetMap (ODbL), Microsoft y Google Open Buildings (CC BY 4.0).',
-  /** Altura de piso de referencia para los «pisos aproximados» (definida por el Departamento). */
-  alturaPiso: 3,
+  /**
+   * Altura de piso de referencia para los «pisos aproximados»: 2,5 m, definida por el Departamento
+   * (comprobada contando pisos de fachadas en Google Earth Pro). Es la misma `metrosPorPiso` del ejercicio.
+   */
+  alturaPiso: 2.5,
   nota:
-    'Altura y número de pisos referenciales, calculados en el punto pinchado (pisos ≈ altura ÷ 3,0 m). ' +
+    'Altura y número de pisos referenciales, calculados en el punto pinchado (pisos ≈ altura ÷ 2,5 m). ' +
     'Para medir una altura, usa la herramienta Distancia y mide la vertical. ' +
     'Cuando la fuente no informa la altura, el volumen usa un valor por defecto.',
   /** Nota cuando el objeto agrupa varios volúmenes de distinta altura. */
