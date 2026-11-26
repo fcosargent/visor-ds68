@@ -221,7 +221,8 @@ export default function App() {
                 aria-pressed={vista === v}
                 onClick={() => setVista(v)}
               >
-                Visualizador {v.toUpperCase()}
+                <span className="view-switch-word">Visualizador </span>
+                {v.toUpperCase()}
               </button>
             ))}
           </div>
@@ -304,6 +305,7 @@ export default function App() {
           )}
           <div className="export-footer">
             {hoy()} · Fuente: {METADATA.fuenteImagen}
+            {vista === '3d' && ' · Edificaciones: © colaboradores de OpenStreetMap, Esri'}
           </div>
           {(loading || availableFiles === undefined) && <div className={`loading ${NO_EXPORTAR}`}>Cargando…</div>}
         </div>

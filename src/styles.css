@@ -73,6 +73,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* Visualizador 3D */
 .scene-3d .esri-view-surface:focus::after { outline: none; }
+/* Controles y ventanas emergentes de la escena sobre los cuadros de condición y leyenda. */
+.scene-3d .esri-ui { z-index: 801; }
 .scene-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .scene-error {
   position: absolute;
@@ -114,12 +116,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .scene-tools button:hover { background: #f3f3f3; color: #151515; }
 .scene-tools button.is-active { background: var(--focus); color: #fff; }
 .scene-slope {
-  position: absolute;
-  right: 40px;
   margin: 0;
-  width: max-content;
-  max-width: 240px;
-  padding: 6px 9px;
+  width: 300px;
+  box-sizing: border-box;
+  padding: 8px 12px;
   background: #fff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   font-size: 12px;
@@ -536,4 +536,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .floating-panel.is-minimized { padding: 0 0.75em; }
   .panel-bar { line-height: 40px; padding-right: 40px; }
   .panel-reabrir { min-height: 40px; padding: 0 12px; }
+  /* Selector compacto («2D | 3D») para no restar alto al mapa. */
+  .view-switch-word { display: none; }
+  .view-switch { margin-right: 4px; }
 }

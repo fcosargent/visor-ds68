@@ -39,8 +39,12 @@ type Herramienta = 'distancia' | 'area' | null;
 
 /** Inclinación de la cámara al abrir (0 = vista cenital). */
 const INCLINACION = 55;
+/** Zoom con que la vista oblicua inicial abarca toda la comuna. */
+const ZOOM_COMUNA = 14;
 /** Los predios se dibujan algo más transparentes que en 2D, para distinguirlos bajo los edificios. */
 const FACTOR_OPACIDAD_3D = 0.8;
+/** Opacidad de los volúmenes de edificios. */
+const OPACIDAD_EDIFICIOS = 0.75;
 /** Escala desde la que se muestran los nombres de calles (equivale aprox. al zoom 16 del 2D). */
 const ESCALA_NOMBRES_CALLES = 12000;
 const SR_WGS84 = { wkid: 4326 };
@@ -211,7 +215,8 @@ function etiquetasCalles(config: LayerConfig): Esri[] {
   return [
     {
       labelExpressionInfo: { expression: '$feature.nombre' },
-      labelPlacement: 'above-center',
+      // Sobre el terreno ArcGIS solo admite etiquetas centradas en el punto.
+      labelPlacement: 'center-center',
       minScale: ESCALA_NOMBRES_CALLES,
       symbol: {
         type: 'label-3d',
@@ -292,7 +297,8 @@ async function capaEdificios(E: Modulos, limite: Esri | null) {
         symbolLayers: [
           {
             type: 'fill',
-            material: { color: [238, 239, 241, 1], colorMixMode: 'replace' },
+            // Algo transparentes, para que se vean los predios de la condición bajo los edificios.
+            material: { color: [238, 239, 241, OPACIDAD_EDIFICIOS], colorMixMode: 'replace' },
             edges: { type: 'solid', color: [80, 86, 92, 0.55], size: 0.6 },
           },
         ],
@@ -304,34 +310,52 @@ async function capaEdificios(E: Modulos, limite: Esri | null) {
   const existentes = new Set((capa.fields ?? []).map((f: Esri) => f.name));
   const campos = EDIFICIOS_3D.campos.filter((c) => existentes.has(c.campo));
   capa.outFields = campos.map((c) => c.campo);
+  // Tabla con el mismo formato de las fichas del 2D; se omiten los campos vacíos, en 0 o «unknown».
+  const valor = (campo: string, v: unknown): string | null => {
+    if (v == null || v === '' || v === 0 || v === 'unknown') return null;
+    if (campo === 'height' && typeof v === 'number') return `${formatearNumero(v, 1)} m`;
+    if (campo === 'building_levels' && typeof v === 'number') return formatearNumero(v, 0);
+    if (campo === 'OSMID') return String(Math.round(Number(v)));
+    return String(v);
+  };
   capa.popupTemplate = {
     title: (e: Esri) => String(e.graphic?.attributes?.name || 'Edificación'),
     outFields: campos.map((c) => c.campo),
-    content: [
-      {
-        type: 'fields',
-        fieldInfos: campos.map((c) => ({
-          fieldName: c.campo,
-          label: c.alias,
-          format: c.campo === 'height' ? { places: 1, digitSeparator: true } : c.campo === 'OSMID' ? { places: 0, digitSeparator: false } : undefined,
-        })),
-      },
-      { type: 'text', text: `<p class="popup-note">${EDIFICIOS_3D.nota}</p>` },
-    ],
+    content: (e: Esri) => {
+      const at = e.graphic?.attributes ?? {};
+      const filas = campos
+        .map((c) => [c.alias.replace(' (m)', ''), valor(c.campo, at[c.campo])] as const)
+        .filter(([, v]) => v !== null)
+        .map(([a, v]) => `<tr><th>${escapar(a)}</th><td>${escapar(v!)}</td></tr>`)
+        .join('');
+      return contenidoHtml(
+        `<div class="popup popup-ficha"><table class="popup-table">${filas || '<tr><td>Sin atributos informados.</td></tr>'}</table>` +
+          `<p class="popup-note">${escapar(EDIFICIOS_3D.nota)}</p></div>`,
+      );
+    },
   };
   return capa;
 }
 
-const A_METROS: Record<string, number> = { millimeters: 0.001, centimeters: 0.01, decimeters: 0.1, meters: 1, kilometers: 1000 };
+const A_METROS: Record<string, number> = { mm: 0.001, cm: 0.01, m: 1, km: 1000 };
+
+/**
+ * Distancia en metros desde la medición del SDK. En esta versión el SDK entrega solo el texto
+ * formateado (por ejemplo «1.234,5 m» con locale «es»), así que se lee desde ahí.
+ */
+function aMetros(d: Esri): number | null {
+  if (typeof d?.value === 'number') return d.value * (A_METROS[d.unit] ?? 1);
+  const m = /(-?[\d.,]+)\s*(km|cm|mm|m)\b/i.exec(String(d?.text ?? ''));
+  if (!m) return null;
+  return Number(m[1].replace(/\./g, '').replace(',', '.')) * A_METROS[m[2].toLowerCase()];
+}
 
 /** Pendiente de la medición directa: arcotangente(vertical ÷ horizontal), en grados y en %. */
 function pendiente(m: Esri): string | null {
-  const h = m?.horizontalDistance;
-  const v = m?.verticalDistance;
-  if (!h || !v) return null;
-  const hm = h.value * (A_METROS[h.unit] ?? 1);
-  const vm = Math.abs(v.value) * (A_METROS[v.unit] ?? 1);
-  if (!(hm > 0)) return null;
+  const hm = aMetros(m?.horizontalDistance);
+  const v = aMetros(m?.verticalDistance);
+  if (hm == null || v == null || !(hm > 0)) return null;
+  const vm = Math.abs(v);
   const grados = (Math.atan(vm / hm) * 180) / Math.PI;
   return `${formatearNumero(grados, 1)}° (${formatearNumero((vm / hm) * 100, 1)}%)`;
 }
@@ -368,6 +392,7 @@ export default function SceneView3D({
   const [barra, setBarra] = useState<HTMLDivElement | null>(null);
   const [herramienta, setHerramienta] = useState<Herramienta>(null);
   const [textoPendiente, setTextoPendiente] = useState<string | null>(null);
+  const [nodoPendiente, setNodoPendiente] = useState<HTMLDivElement | null>(null);
 
   const track = <T,>(p: Promise<T>) => {
     pendingRef.current += 1;
@@ -436,11 +461,18 @@ export default function SceneView3D({
         if (encuadreInicial) {
           view.goTo({ center: [lon, lat], zoom: encuadreInicial.zoom, tilt: INCLINACION }, { animate: false }).catch(() => {});
         } else {
+          // Centro de la comuna (caja del Límite comunal) con un zoom que la abarca completa en la
+          // vista oblicua. Con `target` y una inclinación, ArcGIS encuadra demasiado cerca.
           const limite = REFERENCE_LAYERS.find((l) => l.id === 'limite_comunal');
           const data = limite ? await loadGeoJSON(limite.url).catch(() => null) : null;
-          const poly = geometria(data?.features[0]?.geometry ?? null);
+          const g = data?.features[0]?.geometry;
+          const puntos = g?.type === 'Polygon' ? g.coordinates.flat() : g?.type === 'MultiPolygon' ? g.coordinates.flat(2) : [];
+          const medio = (eje: 0 | 1) => (Math.min(...puntos.map((p) => p[eje])) + Math.max(...puntos.map((p) => p[eje]))) / 2;
+          const centro = puntos.length ? [medio(0), medio(1)] : [lon, lat];
           if (cancelado) return;
-          view.goTo(poly ? { target: poly, tilt: INCLINACION } : { tilt: INCLINACION }, { animate: false }).catch(() => {});
+          view
+            .goTo({ center: centro, zoom: ZOOM_COMUNA, tilt: INCLINACION, heading: 0 }, { animate: false })
+            .catch(() => {});
         }
         manijas.push(
           E.reactiveUtils.when(
@@ -559,15 +591,25 @@ export default function SceneView3D({
     const widget = new Widget({ view, unit: 'metric' });
     view.ui.add(widget, 'top-right');
     widget.viewModel.start?.();
-    const manija =
-      herramienta === 'distancia'
-        ? E.reactiveUtils.watch(
-            () => widget.viewModel.measurement,
-            (m: Esri) => setTextoPendiente(pendiente(m)),
-          )
-        : null;
+    // La pendiente va en un recuadro propio, bajo el panel de la medición.
+    let manija: Esri = null;
+    let recuadro: HTMLDivElement | null = null;
+    if (herramienta === 'distancia') {
+      recuadro = document.createElement('div');
+      view.ui.add(recuadro, 'top-right');
+      setNodoPendiente(recuadro);
+      manija = E.reactiveUtils.watch(
+        () => {
+          const m = widget.viewModel.measurement;
+          return [m?.horizontalDistance?.text, m?.verticalDistance?.text, m?.horizontalDistance?.value, m?.verticalDistance?.value];
+        },
+        () => setTextoPendiente(pendiente(widget.viewModel.measurement)),
+      );
+    }
     return () => {
       manija?.remove();
+      if (recuadro) view.ui.remove(recuadro);
+      setNodoPendiente(null);
       view.ui.remove(widget);
       widget.destroy();
     };
@@ -606,13 +648,15 @@ export default function SceneView3D({
               </svg>
               <span>Área</span>
             </button>
-            {herramienta === 'distancia' && (
-              <p className="scene-slope" title="Calculada con la medición: arcotangente(vertical ÷ horizontal)">
-                Pendiente (calculada): <strong>{textoPendiente ?? '—'}</strong>
-              </p>
-            )}
           </div>,
           barra,
+        )}
+      {nodoPendiente &&
+        createPortal(
+          <p className="scene-slope" title="Calculada con la medición: arcotangente(vertical ÷ horizontal)">
+            Pendiente (calculada): <strong>{textoPendiente ?? '—'}</strong>
+          </p>,
+          nodoPendiente,
         )}
     </>
   );
