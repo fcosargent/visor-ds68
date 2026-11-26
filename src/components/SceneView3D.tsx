@@ -6,7 +6,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Feature, Geometry, Position } from 'geojson';
-import { EDIFICIOS_3D, PREDIOS_URL, REFERENCE_LAYERS, type LayerConfig } from '../config/layers';
+import { EDIFICIOS_3D, MAPA_BASE_3D, PREDIOS_URL, REFERENCE_LAYERS, type LayerConfig } from '../config/layers';
+import { crearIndice, type IndicePredios } from '../lib/indicePredios';
 import { METADATA } from '../config/metadata';
 import { colorRelleno, type CondicionActiva } from '../config/condiciones';
 import { importar, type Esri } from '../lib/arcgis';
@@ -45,6 +46,8 @@ const ZOOM_COMUNA = 14;
 const FACTOR_OPACIDAD_3D = 0.8;
 /** Opacidad de los volúmenes de edificios. */
 const OPACIDAD_EDIFICIOS = 0.75;
+/** Los edificios en predios de la condición van casi opacos, para que su color se lea bien. */
+const OPACIDAD_EDIFICIOS_CONDICION = 0.95;
 /** Escala desde la que se muestran los nombres de calles (equivale aprox. al zoom 16 del 2D). */
 const ESCALA_NOMBRES_CALLES = 12000;
 const SR_WGS84 = { wkid: 4326 };
@@ -59,6 +62,7 @@ const MODULOS = {
   SceneLayer: 'layers/SceneLayer',
   SceneFilter: 'layers/support/SceneFilter',
   Polygon: 'geometry/Polygon',
+  webMercatorUtils: 'geometry/support/webMercatorUtils',
   geodesicBufferOperator: 'geometry/operators/geodesicBufferOperator',
   DirectLineMeasurement3D: 'widgets/DirectLineMeasurement3D',
   AreaMeasurement3D: 'widgets/AreaMeasurement3D',
@@ -287,40 +291,119 @@ function capaCondicion(E: Modulos, condicion: CondicionActiva, features: Feature
   });
 }
 
-/**
- * Edificaciones 3D, recortadas con un SceneFilter («contains») al límite comunal ampliado
- * EDIFICIOS_3D.bufferRecorteMetros (ver config/layers.ts).
- */
-async function capaEdificios(E: Modulos, limiteGeojson: Esri | null) {
-  let limite: Esri = null;
-  if (limiteGeojson) {
-    const poligono = new E.Polygon(limiteGeojson);
-    await E.geodesicBufferOperator.load?.();
-    limite = E.geodesicBufferOperator.execute(poligono, EDIFICIOS_3D.bufferRecorteMetros, { unit: 'meters' }) ?? poligono;
+/** Volumen de edificio: gris algo transparente (deja ver los predios) o con el color de la condición. */
+const simboloEdificio = (color: number[]) => ({
+  type: 'mesh-3d',
+  symbolLayers: [
+    {
+      type: 'fill',
+      material: { color, colorMixMode: 'replace' },
+      edges: { type: 'solid', color: [80, 86, 92, 0.55], size: 0.6 },
+    },
+  ],
+});
+const SIMBOLO_EDIFICIO_GRIS = simboloEdificio([238, 239, 241, OPACIDAD_EDIFICIOS]);
+
+/** Renderer de los edificios: gris, salvo los clasificados en un predio de la condición (por ObjectID). */
+function rendererEdificios(colores: Map<number, string>): Esri {
+  const simbolos = new Map<string, Esri>();
+  const infos: Esri[] = [];
+  for (const [oid, color] of colores) {
+    if (!simbolos.has(color)) simbolos.set(color, simboloEdificio(rgba(color, OPACIDAD_EDIFICIOS_CONDICION)));
+    infos.push({ value: oid, symbol: simbolos.get(color) });
   }
+  return { type: 'unique-value', field: 'ObjectID', defaultSymbol: SIMBOLO_EDIFICIO_GRIS, uniqueValueInfos: infos };
+}
+
+/**
+ * Límite comunal ampliado EDIFICIOS_3D.bufferRecorteMetros, para recortar con SceneFilter
+ * («contains») los edificios, árboles y etiquetas. Se calcula una vez.
+ */
+let recorte: Promise<Esri> | null = null;
+function recorteComunal(E: Modulos): Promise<Esri> {
+  recorte ??= (async () => {
+    const limite = REFERENCE_LAYERS.find((l) => l.id === 'limite_comunal');
+    const data = limite ? await loadGeoJSON(limite.url).catch(() => null) : null;
+    const geojson = geometria(data?.features[0]?.geometry ?? null);
+    if (!geojson) return null;
+    const poligono = new E.Polygon(geojson);
+    await E.geodesicBufferOperator.load?.();
+    return E.geodesicBufferOperator.execute(poligono, EDIFICIOS_3D.bufferRecorteMetros, { unit: 'meters' }) ?? poligono;
+  })().catch((err) => {
+    recorte = null;
+    throw err;
+  });
+  return recorte;
+}
+
+const filtroComunal = (E: Modulos, limite: Esri) =>
+  limite ? new E.SceneFilter({ geometries: [limite], spatialRelationship: 'contains' }) : undefined;
+
+/** Copia de un estilo vectorial con solo algunas de sus capas (sin textos), con rutas completas. */
+let estiloOpenBasemap: Promise<Esri> | null = null;
+async function estiloParcial(patron: RegExp): Promise<Esri> {
+  estiloOpenBasemap ??= fetch(MAPA_BASE_3D.estiloVectorial)
+    .then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .catch((err) => {
+      estiloOpenBasemap = null;
+      throw err;
+    });
+  const estilo = JSON.parse(JSON.stringify(await estiloOpenBasemap));
+  const abs = (ruta: string) => new URL(ruta, MAPA_BASE_3D.estiloVectorial).href;
+  if (typeof estilo.sprite === 'string') estilo.sprite = abs(estilo.sprite);
+  if (estilo.glyphs) estilo.glyphs = abs(estilo.glyphs);
+  for (const fuente of Object.values(estilo.sources) as Esri[]) if (fuente.url) fuente.url = abs(fuente.url);
+  estilo.layers = estilo.layers.filter((l: Esri) => l.type !== 'symbol' && l.type !== 'background' && patron.test(l.id));
+  return estilo;
+}
+
+/** Capas del grupo «Mapa base 3D»: árboles, etiquetas de lugares, áreas verdes y agua. */
+async function capaMapaBase3d(E: Modulos, config: LayerConfig): Promise<Esri> {
+  switch (config.escena3d) {
+    case 'arboles':
+      return new E.SceneLayer({
+        url: MAPA_BASE_3D.arboles,
+        title: config.label,
+        popupEnabled: false,
+        filter: filtroComunal(E, await recorteComunal(E)),
+      });
+    case 'etiquetas':
+      return new E.SceneLayer({
+        url: MAPA_BASE_3D.etiquetas,
+        title: config.label,
+        popupEnabled: false,
+        definitionExpression: MAPA_BASE_3D.filtroEtiquetas,
+        filter: filtroComunal(E, await recorteComunal(E)),
+      });
+    case 'verdes':
+    case 'agua':
+      return new E.VectorTileLayer({
+        title: config.label,
+        style: await estiloParcial(config.escena3d === 'verdes' ? MAPA_BASE_3D.capasVerdes : MAPA_BASE_3D.capasAgua),
+      });
+    default:
+      throw new Error(`capa 3D desconocida: ${String(config.escena3d)}`);
+  }
+}
+
+/**
+ * Edificaciones 3D, recortadas con un SceneFilter («contains») al límite comunal ampliado.
+ * `enCondicion` dice si el edificio quedó clasificado en un predio de la condición activa.
+ */
+async function capaEdificios(E: Modulos, enCondicion: (oid: number) => string | null) {
   const capa = new E.SceneLayer({
     url: EDIFICIOS_3D.url,
     title: 'Edificaciones 3D',
-    renderer: {
-      type: 'simple',
-      symbol: {
-        type: 'mesh-3d',
-        symbolLayers: [
-          {
-            type: 'fill',
-            // Algo transparentes, para que se vean los predios de la condición bajo los edificios.
-            material: { color: [238, 239, 241, OPACIDAD_EDIFICIOS], colorMixMode: 'replace' },
-            edges: { type: 'solid', color: [80, 86, 92, 0.55], size: 0.6 },
-          },
-        ],
-      },
-    },
-    filter: limite ? new E.SceneFilter({ geometries: [limite], spatialRelationship: 'contains' }) : undefined,
+    renderer: { type: 'simple', symbol: SIMBOLO_EDIFICIO_GRIS },
+    filter: filtroComunal(E, await recorteComunal(E)),
   });
   await capa.load();
   const existentes = new Set((capa.fields ?? []).map((f: Esri) => f.name));
   const campos = EDIFICIOS_3D.campos.filter((c) => existentes.has(c.campo));
-  capa.outFields = campos.map((c) => c.campo);
+  capa.outFields = ['ObjectID', ...campos.map((c) => c.campo)];
   // Tabla con el mismo formato de las fichas del 2D; se omiten los campos vacíos, en 0 o «unknown».
   const valor = (campo: string, v: unknown): string | null => {
     if (v == null || v === '' || v === 0 || v === 'unknown') return null;
@@ -331,11 +414,14 @@ async function capaEdificios(E: Modulos, limiteGeojson: Esri | null) {
   };
   capa.popupTemplate = {
     title: (e: Esri) => String(e.graphic?.attributes?.name || 'Edificación'),
-    outFields: campos.map((c) => c.campo),
+    outFields: ['ObjectID', ...campos.map((c) => c.campo)],
     content: (e: Esri) => {
       const at = e.graphic?.attributes ?? {};
-      const filas = campos
-        .map((c) => [c.alias.replace(' (m)', ''), valor(c.campo, at[c.campo])] as const)
+      const condicion = typeof at.ObjectID === 'number' ? enCondicion(at.ObjectID) : null;
+      const filas = [
+        ...campos.map((c) => [c.alias.replace(' (m)', ''), valor(c.campo, at[c.campo])] as const),
+        ['Condición activa', condicion ? `En predio de «${condicion}»` : 'No está en predios de la condición'] as const,
+      ]
         .filter(([, v]) => v !== null)
         .map(([a, v]) => `<tr><th>${escapar(a)}</th><td>${escapar(v!)}</td></tr>`)
         .join('');
@@ -411,6 +497,88 @@ export default function SceneView3D({
     return p.finally(() => {
       pendingRef.current -= 1;
       if (pendingRef.current === 0) cb.current.onLoadingChange(false);
+    });
+  };
+
+  // ── Edificios coloreados por condición ─────────────────────────────────────────────
+  // Cada edificio cargado en la escena se asigna al predio donde cae el centro de su planta
+  // (índice de los predios de la condición activa). Si cae en uno, toma su color (rosado en
+  // Conjunto Armónico, la clase de densidad en Densidad); si no, queda gris. Los edificios nuevos
+  // se clasifican a medida que la escena los carga.
+  const indiceRef = useRef<IndicePredios<PredioProps> | null>(null);
+  /** ObjectID → color, de los edificios en predios de la condición. */
+  const coloresRef = useRef(new Map<number, string>());
+  /** ObjectID de los edificios ya revisados (en la condición o no). */
+  const revisadosRef = useRef(new Set<number>());
+  const edificiosRef = useRef<Esri>(null);
+  const manijaEdificiosRef = useRef<Esri>(null);
+  const condicionActRef = useRef(condicion);
+  condicionActRef.current = condicion;
+  const coloreandoRef = useRef<Promise<void> | null>(null);
+
+  const colorearEdificios = (reiniciar = false) => {
+    if (reiniciar) {
+      coloresRef.current = new Map();
+      revisadosRef.current = new Set();
+    }
+    const capa = edificiosRef.current;
+    const view = viewRef.current;
+    const E = esriRef.current;
+    if (!capa || !view || !E || !indiceRef.current) return;
+    // Una pasada a la vez; si llega otra mientras tanto, se encadena.
+    const anterior = coloreandoRef.current ?? Promise.resolve();
+    coloreandoRef.current = anterior
+      .then(async () => {
+        // Se trabaja sobre los mapas vigentes al empezar: si cambia la condición, esta pasada se descarta.
+        const colores = coloresRef.current;
+        const revisados = revisadosRef.current;
+        const indiceActual = indiceRef.current;
+        if (!indiceActual) return;
+        const lv = await view.whenLayerView(capa);
+        const { features } = await lv.queryFeatures({ returnGeometry: true, outFields: ['ObjectID'] });
+        if (colores !== coloresRef.current) return;
+        let cambios = reiniciar;
+        const cond = condicionActRef.current;
+        for (const f of features) {
+          const oid = f.attributes?.ObjectID;
+          if (typeof oid !== 'number' || revisados.has(oid)) continue;
+          revisados.add(oid);
+          const c = f.geometry?.extent?.center;
+          if (!c) continue;
+          const [x, y] = c.spatialReference?.isWGS84 ? [c.x, c.y] : E.webMercatorUtils.xyToLngLat(c.x, c.y);
+          const predio = indiceActual.buscar(x, y);
+          if (predio) {
+            colores.set(oid, colorRelleno(cond, predio.d));
+            cambios = true;
+          }
+        }
+        if (cambios && edificiosRef.current === capa) capa.renderer = rendererEdificios(colores);
+      })
+      .catch((err) => console.warn(`[Visor DS 68] No se pudieron colorear los edificios: ${String(err)}`));
+  };
+
+  const desvincularEdificios = () => {
+    manijaEdificiosRef.current?.remove();
+    manijaEdificiosRef.current = null;
+    edificiosRef.current = null;
+  };
+
+  const vincularEdificios = (capa: Esri) => {
+    const view = viewRef.current;
+    const E = esriRef.current;
+    if (!view || !E) return;
+    desvincularEdificios();
+    edificiosRef.current = capa;
+    colorearEdificios(true);
+    view.whenLayerView(capa).then((lv: Esri) => {
+      if (edificiosRef.current !== capa) return;
+      // Cada vez que la escena termina de cargar edificios, se clasifican los nuevos.
+      manijaEdificiosRef.current = E.reactiveUtils.watch(
+        () => lv.updating,
+        (actualizando: boolean) => {
+          if (!actualizando) colorearEdificios();
+        },
+      );
     });
   };
 
@@ -508,6 +676,7 @@ export default function SceneView3D({
       cancelado = true;
       manijas.forEach((m) => m.remove());
       cb.current.registrarCaptura(null);
+      desvincularEdificios();
       view?.destroy();
       viewRef.current = null;
       condicionRef.current = null;
@@ -534,6 +703,9 @@ export default function SceneView3D({
       .then((data) => {
         if (stale || !viewRef.current) return;
         const features = prediosDeCondicion(data, condicion);
+        // Edificios: se vuelven a clasificar según los predios de la nueva condición.
+        indiceRef.current = crearIndice<PredioProps>(features);
+        colorearEdificios(true);
         const layer = capaCondicion(E, condicion, features, () => normasRef.current);
         view.map.add(layer);
         condicionRef.current = { id: ID_CONDICION, layer };
@@ -559,25 +731,26 @@ export default function SceneView3D({
     activeIdsRef.current = wanted;
     for (const [id, active] of refsRef.current) {
       if (!wanted.has(id)) {
+        if (active.layer === edificiosRef.current) desvincularEdificios();
         view.map.remove(active.layer);
         refsRef.current.delete(id);
       }
     }
     for (const config of references) {
       if (refsRef.current.has(config.id)) continue;
-      const crear = config.escena3d
-        ? (async () => {
-            const limite = REFERENCE_LAYERS.find((l) => l.id === 'limite_comunal');
-            const data = limite ? await loadGeoJSON(limite.url).catch(() => null) : null;
-            return capaEdificios(E, geometria(data?.features[0]?.geometry ?? null));
-          })()
-        : loadGeoJSON(config.url).then((data) => capaReferencia(E, config, data.features));
+      const crear =
+        config.escena3d === 'edificios'
+          ? capaEdificios(E, (oid) => (coloresRef.current.has(oid) ? condicionActRef.current.nombre : null))
+          : config.escena3d
+            ? capaMapaBase3d(E, config)
+            : loadGeoJSON(config.url).then((data) => capaReferencia(E, config, data.features));
       track(crear)
         .then((layer) => {
           if (!viewRef.current || !activeIdsRef.current.has(config.id) || refsRef.current.has(config.id)) return;
           view.map.add(layer);
           refsRef.current.set(config.id, { id: config.id, layer });
           reorder();
+          if (config.escena3d === 'edificios') vincularEdificios(layer);
         })
         .catch((err) => {
           console.warn(`[Visor DS 68] No se pudo cargar la capa «${config.label}» en 3D: ${String(err)}`);

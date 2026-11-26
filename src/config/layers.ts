@@ -37,8 +37,13 @@ export interface LayerConfig {
   ficha?: FichaConfig;
   /** Grupo de capas al que pertenece (ver GRUPOS_CAPAS). */
   grupo?: string;
-  /** Capa externa que solo existe en el Visualizador 3D (no es un archivo de public/data). */
-  escena3d?: boolean;
+  /**
+   * Capa externa que solo existe en el Visualizador 3D (no es un archivo de public/data):
+   * edificios, árboles, etiquetas de lugares, áreas verdes o agua.
+   */
+  escena3d?: 'edificios' | 'arboles' | 'etiquetas' | 'verdes' | 'agua';
+  /** Texto breve bajo el nombre de la capa en la leyenda. */
+  notaLeyenda?: string;
 }
 
 export interface FichaConfig {
@@ -65,7 +70,31 @@ export const GRUPOS_CAPAS: GrupoCapas[] = [
     description: 'Zonas con incentivo y zonas con incentivos cuestionados.',
     visibleByDefault: false,
   },
+  {
+    // Solo Visualizador 3D: en el 2D el grupo no aparece porque todas sus capas son de la escena.
+    id: 'mapa_base_3d',
+    label: 'Mapa base 3D (Esri)',
+    description: 'Áreas verdes, agua, árboles y nombres de lugares del mapa base 3D de Esri.',
+    visibleByDefault: true,
+  },
 ];
+
+/**
+ * Elementos del mapa base 3D de Esri (solo Visualizador 3D). Son servicios públicos, sin API key.
+ * Árboles y etiquetas son servicios que Esri describe como «para mapas base, no para uso
+ * independiente»; áreas verdes y agua se toman del mapa base vectorial «OpenBasemap» (OSM).
+ */
+export const MAPA_BASE_3D = {
+  arboles: 'https://basemaps3d.arcgis.com/arcgis/rest/services/Open3D_Trees_v1/SceneServer',
+  etiquetas: 'https://basemaps3d.arcgis.com/arcgis/rest/services/Open3D_DarkLabels_v1/SceneServer',
+  /** Se excluyen los nombres de comunas (TextType 7) y de ciudades (TextType 38). */
+  filtroEtiquetas: 'TextType NOT IN (7, 38)',
+  estiloVectorial: 'https://basemaps.arcgis.com/arcgis/rest/services/OpenBasemap_v2/VectorTileServer/resources/styles/root.json',
+  /** Capas del estilo que forman cada capa (por su `id`); se conservan sus colores. */
+  capasVerdes:
+    /land use area\/(park|grass|garden|meadow|flowerbed|recreation ground|dog park|plant nursery|cemetery|allotments|village green)|land area\/grassland|pitch area\/grass|wetland/i,
+  capasAgua: /^(water area|water line)\//i,
+};
 
 /** Alias de la ficha de las Zonas de Conservación Histórica (mismos campos en ambas capas). */
 const CAMPOS_FICHA_ZCH: FichaConfig['campos'] = [
@@ -149,7 +178,65 @@ export const REFERENCE_LAYERS: LayerConfig[] = [
     source:
       'Esri, «Esri 3D Buildings» (Esri Community Maps, © colaboradores de OpenStreetMap, Microsoft y Google Open Buildings)',
     order: 110,
-    escena3d: true,
+    escena3d: 'edificios',
+    notaLeyenda: 'En color, los que tienen su centro en un predio de la condición',
+  },
+  // Mapa base 3D (grupo «mapa_base_3d»). Verdes y agua van bajo los predios de la condición.
+  {
+    id: 'mb3d_etiquetas',
+    label: 'Nombres de lugares',
+    url: MAPA_BASE_3D.etiquetas,
+    type: 'label',
+    style: { color: '#4a4f55', weight: 0 },
+    visibleByDefault: false,
+    category: 'referencia',
+    description: 'Plazas, parques, edificios, ministerios y otros lugares (sin ciudades ni comunas).',
+    source: 'Esri, «Open 3D Labels» (© colaboradores de OpenStreetMap)',
+    order: 14,
+    grupo: 'mapa_base_3d',
+    escena3d: 'etiquetas',
+  },
+  {
+    id: 'mb3d_arboles',
+    label: 'Árboles 3D',
+    url: MAPA_BASE_3D.arboles,
+    type: 'point',
+    style: { color: '#4f7d3a', weight: 1, fillColor: '#7fae5e', fillOpacity: 1, radius: 5 },
+    visibleByDefault: true,
+    category: 'referencia',
+    description: 'Árboles en 3D según OpenStreetMap.',
+    source: 'Esri, «Open 3D Trees» (© colaboradores de OpenStreetMap)',
+    order: 13,
+    grupo: 'mapa_base_3d',
+    escena3d: 'arboles',
+  },
+  {
+    id: 'mb3d_verdes',
+    label: 'Áreas verdes',
+    url: MAPA_BASE_3D.estiloVectorial,
+    type: 'polygon',
+    style: { color: '#9fd18b', weight: 0.5, fillColor: '#cdebb0', fillOpacity: 1 },
+    visibleByDefault: true,
+    category: 'referencia',
+    description: 'Parques, plazas, pasto y jardines.',
+    source: 'Esri, mapa base «OpenBasemap» (© colaboradores de OpenStreetMap)',
+    order: 12,
+    grupo: 'mapa_base_3d',
+    escena3d: 'verdes',
+  },
+  {
+    id: 'mb3d_agua',
+    label: 'Agua',
+    url: MAPA_BASE_3D.estiloVectorial,
+    type: 'polygon',
+    style: { color: '#8fbbd9', weight: 0.5, fillColor: '#aad3df', fillOpacity: 1 },
+    visibleByDefault: true,
+    category: 'referencia',
+    description: 'Ríos, canales y piletas.',
+    source: 'Esri, mapa base «OpenBasemap» (© colaboradores de OpenStreetMap)',
+    order: 11,
+    grupo: 'mapa_base_3d',
+    escena3d: 'agua',
   },
   {
     id: 'manzanas',

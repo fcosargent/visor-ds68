@@ -65,7 +65,10 @@ export default function MapLegend({ condicion, items, valoresClase }: Props) {
           layer ? (
             <li key={layer.id}>
               <Swatch layer={layer} />
-              <span>{layer.label}</span>
+              <span>
+                {layer.label}
+                {layer.notaLeyenda && <span className="legend-sub">{layer.notaLeyenda}</span>}
+              </span>
             </li>
           ) : (
             entradaCondicion
