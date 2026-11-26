@@ -48,6 +48,19 @@ Ocho condiciones, organizadas en dos grupos. Se ve una condición a la vez.
 - **«Descargar imagen (JPG)»:** exporta la vista actual con título, cifras, leyenda, escala, norte, fecha y fuente. El archivo se llama `DS68_<campo>.jpg`.
 - **Mapa base sin textos:** se usa la versión vectorial de Esri «Light Gray Canvas Base», dibujada con MapLibre, sin ninguna etiqueta (ni comunas, ni calles, ni parques). Los nombres de calles los entrega solo la capa oficial «Nombres de calles». Si el mapa vectorial no carga, se usa el mapa raster equivalente, que trae algunos nombres grabados desde el zoom 15 (`src/lib/basemap.ts`).
 
+## Visualizador 3D
+
+En la barra superior, **Visualizador 2D | Visualizador 3D** cambia la vista. Cada una se abre por enlace directo: `?vista=3d` (o `#3d`) abre el 3D; sin parámetro, el 2D. Al cambiar de vista se conservan la condición, las capas encendidas, el orden de las capas y el centro y zoom aproximados.
+
+- **Misma lógica que el 2D.** El panel de condiciones, los cuadros de condición y leyenda (con minimizar y cerrar), la referencia normativa, los conteos y las ventanas emergentes de predios y fichas son los mismos componentes y funciones (`condiciones.json`, `layers.ts`, `lib/popup.ts`, `lib/condicionDatos.ts`). Solo cambia el mapa: `src/components/MapView.tsx` (2D, Leaflet) o `src/components/SceneView3D.tsx` (3D).
+- **Carga solo al entrar al 3D.** `SceneView3D` va en un archivo aparte (`React.lazy`), y el ArcGIS Maps SDK for JavaScript se descarga del CDN (`js.arcgis.com`, versión fijada en `src/lib/arcgis.ts`) solo al abrir el 3D. El 2D no descarga nada de ArcGIS.
+- **Edificaciones.** Capa pública de Esri «Open 3D Buildings» (datos de OpenStreetMap), ítem `c444b24b184c4523a5dc96248bfea4e1`. Reemplaza a «OpenStreetMap 3D Buildings» (ítem `ca0470dbbddb4db28bad74ed39949e25`), que está en soporte maduro desde diciembre de 2024 y ya no se actualiza; para volver a ella, cambiar `EDIFICIOS_3D` en `src/config/layers.ts`. Se muestran solo los edificios dentro de la comuna, con un `SceneFilter` («contains») que usa la geometría de «Límite comunal». La altura proviene de OpenStreetMap y, cuando el edificio no la informa, el volumen usa un valor estimado: es un dato referencial.
+- **Capas.** Los predios de la condición y las capas de referencia van pegados al terreno, con la simbología del 2D (los predios, algo más transparentes). En 3D los nombres de calles se muestran horizontales (ArcGIS no gira etiquetas en escenas). «Edificaciones 3D (OpenStreetMap)» aparece en la lista de capas solo en el 3D.
+- **Herramientas.** Medir distancia (directa, horizontal y vertical) y medir área, en unidades métricas e interfaz en español. El SDK no tiene una herramienta de ángulo: la **pendiente** se calcula a partir de la medición de distancia (arcotangente de vertical ÷ horizontal) y se muestra en grados y porcentaje.
+- **Imagen JPG.** La escena se captura con `view.takeScreenshot` y se compone con los cuadros, la leyenda y el pie, igual que en 2D.
+- **API key.** No se necesita: la escena usa solo servicios públicos de Esri (edificios, terreno «Terrain3D» y el mismo mapa base vectorial del 2D). No hay claves en el repositorio. Si Esri llegara a exigirla, usar una key restringida al dominio del visor (queda visible en el navegador, pero solo funciona desde ese sitio) o un mapa base que no la requiera.
+- **Celular.** El 3D funciona igual, con calidad gráfica reducida, y muestra un aviso cerrable de que puede ir lento.
+
 ## Cómo editar textos y parámetros
 
 ### `src/config/condiciones.json`

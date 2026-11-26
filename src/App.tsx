@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GRUPOS_CAPAS, ORDEN_CONDICION, REFERENCE_LAYERS, fileName, type LayerConfig } from './config/layers';
 import { METADATA } from './config/metadata';
 import { CONDICIONES, condicionPorCampo } from './config/condiciones';
 import { loadAvailableFiles } from './lib/data';
 import { loadNormas, type NormasData } from './lib/normas';
 import { NO_EXPORTAR, descargarJpg } from './lib/exportImage';
+import { escribirVista, leerVista, type Encuadre, type Vista } from './lib/vista';
+import { esPantallaMovil } from './lib/pantalla';
 import MapView from './components/MapView';
 import ConditionPanel from './components/ConditionPanel';
 import MapSummary from './components/MapSummary';
@@ -14,6 +16,9 @@ import NormativePanel from './components/NormativePanel';
 import SourcesPanel from './components/SourcesPanel';
 
 type Panel = 'normativa' | 'fuentes' | null;
+
+// El 3D va en un archivo aparte que solo se descarga al abrir esa vista.
+const SceneView3D = lazy(() => import('./components/SceneView3D'));
 
 /**
  * Orden inicial del panel (de arriba hacia abajo), según `order` de layers.ts. Las capas de
@@ -55,12 +60,22 @@ export default function App() {
     () => new Set(GRUPOS_CAPAS.filter((g) => g.visibleByDefault).map((g) => g.id)),
   );
   const mapWrapRef = useRef<HTMLDivElement>(null);
+  const [vista, setVista] = useState<Vista>(leerVista);
+  const [avisoMovil3d, setAvisoMovil3d] = useState(true);
+  /** Último centro y zoom, para conservarlos al cambiar entre 2D y 3D. */
+  const encuadreRef = useRef<Encuadre | null>(null);
+  const guardarEncuadre = useCallback((e: Encuadre) => (encuadreRef.current = e), []);
+  /** Captura de la escena 3D (view.takeScreenshot), para la imagen JPG. */
+  const capturaRef = useRef<(() => Promise<string>) | null>(null);
+  const registrarCaptura = useCallback((c: (() => Promise<string>) | null) => (capturaRef.current = c), []);
+
+  useEffect(() => escribirVista(vista), [vista]);
 
   useEffect(() => {
     loadAvailableFiles().then((files) => {
       if (files) {
         for (const layer of REFERENCE_LAYERS) {
-          if (!files.has(fileName(layer.url))) {
+          if (!layer.escena3d && !files.has(fileName(layer.url))) {
             console.warn(
               `[Visor DS 68] Capa no disponible: «${layer.label}». Falta public/data/${fileName(layer.url)} ` +
                 `(fuente: ${layer.source}). Se oculta su interruptor.`,
@@ -76,11 +91,16 @@ export default function App() {
   }, []);
 
   const isAvailable = useCallback(
-    (id: string, url: string) => !failed.has(id) && (availableFiles == null || availableFiles.has(fileName(url))),
+    (l: LayerConfig) =>
+      !failed.has(l.id) && (l.escena3d || availableFiles == null || availableFiles.has(fileName(l.url))),
     [availableFiles, failed],
   );
 
-  const references = useMemo(() => REFERENCE_LAYERS.filter((l) => isAvailable(l.id, l.url)), [isAvailable]);
+  // Las capas externas del 3D (edificaciones) no aparecen en el 2D.
+  const references = useMemo(
+    () => REFERENCE_LAYERS.filter((l) => isAvailable(l) && (vista === '3d' || !l.escena3d)),
+    [isAvailable, vista],
+  );
   /** Una capa se ve si está encendida y, si pertenece a un grupo, el grupo también lo está. */
   const seVe = useCallback(
     (l: LayerConfig) => activeRefs.has(l.id) && (!l.grupo || gruposActivos.has(l.grupo)),
@@ -162,12 +182,24 @@ export default function App() {
   const exportar = async () => {
     if (!mapWrapRef.current || exporting) return;
     setExporting(true);
+    // En 3D, la escena (WebGL) se captura con view.takeScreenshot y se pone en su lugar mientras se
+    // genera la imagen, para que el JPG incluya igual los cuadros, la leyenda y el pie.
+    let captura: HTMLImageElement | null = null;
     try {
-      await descargarJpg(mapWrapRef.current, `DS68_${condicion.campo}.jpg`);
+      if (vista === '3d') {
+        if (!capturaRef.current) throw new Error('la escena 3D aún no está lista');
+        captura = document.createElement('img');
+        captura.className = 'scene-shot';
+        captura.src = await capturaRef.current();
+        await captura.decode();
+        mapWrapRef.current.prepend(captura);
+      }
+      await descargarJpg(mapWrapRef.current, `DS68_${condicion.campo}${vista === '3d' ? '_3D' : ''}.jpg`);
     } catch (err) {
       console.error('[Visor DS 68] No se pudo exportar la imagen:', err);
       alert('No se pudo generar la imagen. Intente nuevamente cuando el mapa termine de cargar.');
     } finally {
+      captura?.remove();
       setExporting(false);
     }
   };
@@ -180,6 +212,19 @@ export default function App() {
           <p>{METADATA.subtitulo}</p>
         </div>
         <nav className="topbar-actions">
+          <div className="view-switch" role="group" aria-label="Tipo de visualizador">
+            {(['2d', '3d'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={vista === v ? 'is-active' : ''}
+                aria-pressed={vista === v}
+                onClick={() => setVista(v)}
+              >
+                Visualizador {v.toUpperCase()}
+              </button>
+            ))}
+          </div>
           <button className="link-button" onClick={() => setPanel('normativa')}>Referencia normativa</button>
           <button className="link-button" onClick={() => setPanel('fuentes')}>Fuentes</button>
           <button className="link-button is-primary" onClick={exportar} disabled={exporting || loading}>
@@ -206,20 +251,41 @@ export default function App() {
         </aside>
 
         <div className="map-wrap" ref={mapWrapRef}>
-          {availableFiles !== undefined && (
-            <MapView
-              condicion={condicion}
-              references={activeReferences}
-              ordenes={ordenes}
-              normas={normas}
-              onCount={setCount}
-              onValoresClase={setValoresClase}
-              onLoadingChange={setLoading}
-              onLayerUnavailable={markUnavailable}
-            />
-          )}
+          {availableFiles !== undefined &&
+            (vista === '2d' ? (
+              <MapView
+                condicion={condicion}
+                references={activeReferences}
+                ordenes={ordenes}
+                normas={normas}
+                onCount={setCount}
+                onValoresClase={setValoresClase}
+                onLoadingChange={setLoading}
+                onLayerUnavailable={markUnavailable}
+                encuadreInicial={encuadreRef.current}
+                onEncuadre={guardarEncuadre}
+              />
+            ) : (
+              <Suspense fallback={<div className={`loading ${NO_EXPORTAR}`}>Cargando vista 3D…</div>}>
+                <SceneView3D
+                  condicion={condicion}
+                  references={activeReferences}
+                  ordenes={ordenes}
+                  normas={normas}
+                  onCount={setCount}
+                  onValoresClase={setValoresClase}
+                  onLoadingChange={setLoading}
+                  onLayerUnavailable={markUnavailable}
+                  encuadreInicial={encuadreRef.current}
+                  onEncuadre={guardarEncuadre}
+                  registrarCaptura={registrarCaptura}
+                />
+              </Suspense>
+            ))}
           <MapSummary condicion={condicion} predios={count} />
           <MapLegend condicion={condicion} items={itemsLeyenda} valoresClase={valoresClase} />
+          {/* En 3D la orientación la indica la brújula de la escena. */}
+          {vista === '2d' && (
           <div className="north-arrow" aria-label="Norte">
             <svg viewBox="0 0 24 36" aria-hidden="true">
               <path d="M12 2 L20 26 L12 21 L4 26 Z" fill="#33383d" />
@@ -227,6 +293,15 @@ export default function App() {
             </svg>
             <span>N</span>
           </div>
+          )}
+          {vista === '3d' && avisoMovil3d && esPantallaMovil() && (
+            <div className={`aviso-3d ${NO_EXPORTAR}`} role="status">
+              <span>La vista 3D puede funcionar lenta en celulares.</span>
+              <button type="button" aria-label="Cerrar aviso" title="Cerrar aviso" onClick={() => setAvisoMovil3d(false)}>
+                ×
+              </button>
+            </div>
+          )}
           <div className="export-footer">
             {hoy()} · Fuente: {METADATA.fuenteImagen}
           </div>

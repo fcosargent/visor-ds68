@@ -14,18 +14,28 @@ import { METADATA } from '../config/metadata';
 /** Nivel máximo con teselas vectoriales en el servicio de Esri (más allá se amplían, sin perder nitidez). */
 const ZOOM_MAX_TESELAS = 16;
 
+/**
+ * Estilo vectorial de Esri sin capas «symbol» (textos e íconos). Lo usan el mapa 2D (MapLibre)
+ * y la escena 3D (VectorTileLayer de ArcGIS).
+ */
+export async function estiloSinTextos(): Promise<StyleSpecification> {
+  const { estiloVectorial } = METADATA.mapaBase;
+  const r = await fetch(estiloVectorial);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const estilo = (await r.json()) as StyleSpecification;
+  estilo.layers = estilo.layers.filter((capa) => capa.type !== 'symbol');
+  // La ruta del sprite es relativa al estilo; se resuelve para que funcione desde el visor.
+  if (typeof estilo.sprite === 'string') estilo.sprite = new URL(estilo.sprite, estiloVectorial).href;
+  return estilo;
+}
+
 /** `vigente` permite descartar el resultado si el mapa se desmontó mientras cargaba el estilo. */
 export async function agregarMapaBase(map: L.Map, vigente: () => boolean): Promise<void> {
-  const { estiloVectorial, rasterRespaldo, atribucion } = METADATA.mapaBase;
+  const { rasterRespaldo, atribucion } = METADATA.mapaBase;
   map.attributionControl.addAttribution(atribucion);
   try {
-    const r = await fetch(estiloVectorial);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const estilo = (await r.json()) as StyleSpecification;
+    const estilo = await estiloSinTextos();
     if (!vigente()) return;
-    estilo.layers = estilo.layers.filter((capa) => capa.type !== 'symbol');
-    // La ruta del sprite es relativa al estilo; se resuelve para que funcione desde el visor.
-    if (typeof estilo.sprite === 'string') estilo.sprite = new URL(estilo.sprite, estiloVectorial).href;
     // El servicio entrega rutas de teselas relativas, que MapLibre no resuelve: se declaran completas.
     for (const fuente of Object.values(estilo.sources)) {
       if (fuente.type === 'vector' && fuente.url) {

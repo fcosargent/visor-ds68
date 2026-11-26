@@ -10,6 +10,8 @@ import { loadGeoJSON } from '../lib/data';
 import type { NormasData, PredioProps } from '../lib/normas';
 import { fichaPopup, predioPopup } from '../lib/popup';
 import { StreetLabelLayer } from '../lib/streetLabels';
+import { cumpleCondicion, valoresDeClase } from '../lib/condicionDatos';
+import type { Encuadre } from '../lib/vista';
 import { ID_CONDICION } from './LayerPanel';
 
 interface Props {
@@ -23,6 +25,10 @@ interface Props {
   onValoresClase: (valores: number[] | null) => void;
   onLoadingChange: (loading: boolean) => void;
   onLayerUnavailable: (id: string) => void;
+  /** Centro y zoom al abrir (viniendo del 3D); si no hay, se encuadran los predios. */
+  encuadreInicial?: Encuadre | null;
+  /** Informa el centro y el zoom después de cada movimiento (para pasar al 3D). */
+  onEncuadre?: (e: Encuadre) => void;
 }
 
 interface ActiveLayer {
@@ -79,7 +85,7 @@ function buildCondicionLayer(
 ) {
   const s = condicion.grupo.simbologia;
   return L.geoJSON(data, {
-    filter: (f) => ((f.properties as PredioProps | null)?.cond ?? []).includes(condicion.campo),
+    filter: (f) => cumpleCondicion(f, condicion),
     style: (f) => ({
       renderer,
       color: s.contorno,
@@ -105,6 +111,8 @@ export default function MapView({
   onValoresClase,
   onLoadingChange,
   onLayerUnavailable,
+  encuadreInicial,
+  onEncuadre,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -120,8 +128,8 @@ export default function MapView({
   ordenesRef.current = ordenes;
 
   // Callbacks en refs para no reiniciar efectos cuando cambian.
-  const cb = useRef({ onCount, onValoresClase, onLoadingChange, onLayerUnavailable });
-  cb.current = { onCount, onValoresClase, onLoadingChange, onLayerUnavailable };
+  const cb = useRef({ onCount, onValoresClase, onLoadingChange, onLayerUnavailable, onEncuadre });
+  cb.current = { onCount, onValoresClase, onLoadingChange, onLayerUnavailable, onEncuadre };
 
   const track = <T,>(p: Promise<T>) => {
     pendingRef.current += 1;
@@ -145,10 +153,16 @@ export default function MapView({
   // Inicialización del mapa.
   useEffect(() => {
     const map = L.map(containerRef.current!, {
-      center: METADATA.vistaInicial.centro,
-      zoom: METADATA.vistaInicial.zoom,
+      center: encuadreInicial?.centro ?? METADATA.vistaInicial.centro,
+      zoom: encuadreInicial ? Math.round(encuadreInicial.zoom) : METADATA.vistaInicial.zoom,
       zoomControl: false,
       preferCanvas: true,
+    });
+    // Viniendo del 3D se conserva ese encuadre en vez de ajustar a los predios.
+    if (encuadreInicial) firstFitRef.current = false;
+    map.on('moveend', () => {
+      const c = map.getCenter();
+      cb.current.onEncuadre?.({ centro: [c.lat, c.lng], zoom: map.getZoom() });
     });
     // Zoom a la derecha: la columna izquierda queda para el resumen y la leyenda.
     L.control.zoom({ position: 'topright' }).addTo(map);
@@ -191,9 +205,10 @@ export default function MapView({
         const predios = layer.getLayers() as L.Path[];
         cb.current.onCount(predios.length);
         cb.current.onValoresClase(
-          condicion.grupo.simbologia.clasificacion
-            ? [...new Set(predios.map((p) => ((p as L.Polygon).feature?.properties as PredioProps).d ?? 0))].sort((a, b) => a - b)
-            : null,
+          valoresDeClase(
+            predios.map((p) => (p as L.Polygon).feature?.properties as PredioProps),
+            condicion,
+          ),
         );
         if (firstFitRef.current) {
           const bounds = layer.getBounds();

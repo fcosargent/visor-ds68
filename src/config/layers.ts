@@ -37,6 +37,8 @@ export interface LayerConfig {
   ficha?: FichaConfig;
   /** Grupo de capas al que pertenece (ver GRUPOS_CAPAS). */
   grupo?: string;
+  /** Capa externa que solo existe en el Visualizador 3D (no es un archivo de public/data). */
+  escena3d?: boolean;
 }
 
 export interface FichaConfig {
@@ -87,6 +89,31 @@ export const NORMAS_URL = `${DATA}normas_zonas.json`;
 /** Orden de dibujo de la condición activa (entre las capas de referencia). */
 export const ORDEN_CONDICION = 50;
 
+/**
+ * Edificaciones 3D (solo Visualizador 3D). Capa pública de Esri basada en OpenStreetMap; no requiere
+ * API key. Se usa «Open 3D Buildings», versión vigente que reemplaza a «OpenStreetMap 3D Buildings»
+ * (ítem ca0470dbbddb4db28bad74ed39949e25, en soporte maduro desde diciembre de 2024). Para volver a
+ * la capa original, cambiar `url` e `itemId` por los de `original`.
+ */
+export const EDIFICIOS_3D = {
+  itemId: 'c444b24b184c4523a5dc96248bfea4e1',
+  url: 'https://basemaps3d.arcgis.com/arcgis/rest/services/Open3D_Buildings_v1/SceneServer',
+  original: {
+    itemId: 'ca0470dbbddb4db28bad74ed39949e25',
+    url: 'https://basemaps3d.arcgis.com/arcgis/rest/services/OpenStreetMap3D_Buildings_v1/SceneServer',
+  },
+  /** Campos de la ventana emergente, en orden, con alias legibles. */
+  campos: [
+    { campo: 'height', alias: 'Altura (m)' },
+    { campo: 'building_levels', alias: 'Pisos' },
+    { campo: 'name', alias: 'Nombre' },
+    { campo: 'building', alias: 'Tipo de edificación (OSM)' },
+    { campo: 'source', alias: 'Fuente del dato' },
+    { campo: 'OSMID', alias: 'ID OpenStreetMap' },
+  ],
+  nota: 'Altura según OpenStreetMap: cuando el edificio no la informa, el volumen usa un valor estimado. Dato referencial.',
+};
+
 const ESTACIONES_URL = `${DATA}estaciones_metro.geojson`;
 const FUENTE_ESTACIONES = 'ESTACIONES_DE_METRO_COMUNA_STGO_2.shp (campo Name)';
 
@@ -94,6 +121,20 @@ const tooltipEstacion = (p: Record<string, unknown>) =>
   `${String(p.nombre ?? '')}${p.linea ? ` · ${String(p.linea)}` : ''}`;
 
 export const REFERENCE_LAYERS: LayerConfig[] = [
+  {
+    id: 'edificaciones_3d',
+    label: 'Edificaciones 3D (OpenStreetMap)',
+    url: EDIFICIOS_3D.url,
+    type: 'polygon',
+    // Solo para la muestra de la leyenda; en la escena se dibujan como volúmenes grises.
+    style: { color: '#8f959b', weight: 0.75, fillColor: '#e4e6e9', fillOpacity: 1 },
+    visibleByDefault: true,
+    category: 'referencia',
+    description: 'Volúmenes de edificios de OpenStreetMap dentro del límite comunal (solo Visualizador 3D). Altura referencial.',
+    source: 'Esri, «Open 3D Buildings» (datos © colaboradores de OpenStreetMap)',
+    order: 110,
+    escena3d: true,
+  },
   {
     id: 'manzanas',
     label: 'Manzanas',

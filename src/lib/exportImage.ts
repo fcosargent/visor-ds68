@@ -14,7 +14,13 @@ export async function descargarJpg(nodo: HTMLElement, nombreArchivo: string): Pr
       backgroundColor: '#ffffff',
       cacheBust: false,
       filter: (n) =>
-        !(n instanceof HTMLElement && (n.classList.contains(NO_EXPORTAR) || n.classList.contains('leaflet-control-zoom'))),
+        !(
+          n instanceof HTMLElement &&
+          (n.classList.contains(NO_EXPORTAR) ||
+            n.classList.contains('leaflet-control-zoom') ||
+            // Controles y ventanas de la escena 3D de ArcGIS.
+            n.classList.contains('esri-ui'))
+        ),
     });
     const a = document.createElement('a');
     a.href = url;
