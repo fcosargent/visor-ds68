@@ -37,19 +37,37 @@ interface Props {
 }
 
 type Herramienta = 'distancia' | 'area' | null;
-type Calidad = 'rapida' | 'alta';
+/** «auto»: calidad según la distancia (recomendada); «alta»: siempre «medium». */
+type Calidad = 'auto' | 'alta';
 
 /**
- * Perfil de calidad del SceneView. «low» es mucho más fluido, pero con la cámara lejos (vista de
- * toda la comuna) no carga los edificios; por eso en escritorio la calidad por defecto es «alta».
+ * Calidad y bordes según la distancia (mediciones en el README):
+ * - de cerca, perfil «low» con bordes y transparencia: ≈ 41 cuadros por segundo (con «medium» y
+ *   bordes eran ≈ 22);
+ * - de lejos (toda la comuna), perfil «medium» y sin bordes, porque «low» no carga los edificios a esa
+ *   distancia y los bordes casi no se distinguen.
+ * El cambio se hace solo con la cámara detenida (cuesta una pausa de ≈ 0,4 s). Hay un margen
+ * entre los dos umbrales para que no cambie de ida y vuelta.
  */
-const PERFIL_CALIDAD: Record<Calidad, string> = { rapida: 'low', alta: 'medium' };
+const ZOOM_CERCA = 15.2;
+const ZOOM_LEJOS = 14.8;
+interface ModoDibujo {
+  cerca: boolean;
+  perfil: 'low' | 'medium';
+  bordes: boolean;
+}
+function modoDibujo(calidad: Calidad, movil: boolean, zoom: number, cercaAntes: boolean): ModoDibujo {
+  const cerca = zoom >= ZOOM_CERCA ? true : zoom < ZOOM_LEJOS ? false : cercaAntes;
+  // En celular siempre «low» (como antes); con «alta», siempre «medium».
+  const perfil = movil ? 'low' : calidad === 'alta' ? 'medium' : cerca ? 'low' : 'medium';
+  return { cerca, perfil, bordes: cerca };
+}
 const CLAVE_CALIDAD = 'ds68-calidad-3d';
 function leerCalidad(): Calidad {
   try {
-    return localStorage.getItem(CLAVE_CALIDAD) === 'rapida' ? 'rapida' : 'alta';
+    return localStorage.getItem(CLAVE_CALIDAD) === 'alta' ? 'alta' : 'auto';
   } catch {
-    return 'alta';
+    return 'auto';
   }
 }
 
@@ -60,11 +78,12 @@ const ZOOM_COMUNA = 14;
 /** Los predios se dibujan algo más transparentes que en 2D, para distinguirlos bajo los edificios. */
 const FACTOR_OPACIDAD_3D = 0.8;
 /**
- * Rendimiento (mediciones en el README): los edificios van opacos y sin bordes. Los bordes
- * restaban cerca de un tercio de los cuadros por segundo, y la transparencia ya no hace falta
- * porque los edificios toman el color de la condición.
+ * Edificios semitransparentes, para ver si el predio de abajo está pintado: grises al 75 % y los de
+ * la condición al 95 %. Los bordes (contorno de cada edificio) dependen de la distancia (ver modoDibujo).
  */
-const COLOR_EDIFICIO_GRIS = [232, 233, 236, 1];
+const COLOR_EDIFICIO_GRIS = [238, 239, 241, 0.75];
+const OPACIDAD_EDIFICIOS_CONDICION = 0.95;
+const BORDE_EDIFICIO = { type: 'solid', color: [80, 86, 92, 0.55], size: 0.6 };
 /** Espera tras detenerse la cámara antes de clasificar los edificios nuevos. */
 const ESPERA_COLOREADO_MS = 500;
 /** Edificios por consulta de geometría al clasificar. */
@@ -312,22 +331,28 @@ function capaCondicion(E: Modulos, condicion: CondicionActiva, features: Feature
   });
 }
 
-/** Volumen de edificio, gris o con el color de la condición (opaco y sin bordes, por rendimiento). */
-const simboloEdificio = (color: number[]) => ({
+/** Volumen de edificio, gris o con el color de la condición, con o sin bordes. */
+const simboloEdificio = (color: number[], bordes: boolean) => ({
   type: 'mesh-3d',
-  symbolLayers: [{ type: 'fill', material: { color, colorMixMode: 'replace' } }],
+  symbolLayers: [
+    { type: 'fill', material: { color, colorMixMode: 'replace' }, ...(bordes ? { edges: BORDE_EDIFICIO } : {}) },
+  ],
 });
-const SIMBOLO_EDIFICIO_GRIS = simboloEdificio(COLOR_EDIFICIO_GRIS);
 
 /** Renderer de los edificios: gris, salvo los clasificados en un predio de la condición (por ObjectID). */
-function rendererEdificios(colores: Map<number, string>): Esri {
+function rendererEdificios(colores: Map<number, string>, bordes: boolean): Esri {
   const simbolos = new Map<string, Esri>();
   const infos: Esri[] = [];
   for (const [oid, color] of colores) {
-    if (!simbolos.has(color)) simbolos.set(color, simboloEdificio(rgba(color, 1)));
+    if (!simbolos.has(color)) simbolos.set(color, simboloEdificio(rgba(color, OPACIDAD_EDIFICIOS_CONDICION), bordes));
     infos.push({ value: oid, symbol: simbolos.get(color) });
   }
-  return { type: 'unique-value', field: 'ObjectID', defaultSymbol: SIMBOLO_EDIFICIO_GRIS, uniqueValueInfos: infos };
+  return {
+    type: 'unique-value',
+    field: 'ObjectID',
+    defaultSymbol: simboloEdificio(COLOR_EDIFICIO_GRIS, bordes),
+    uniqueValueInfos: infos,
+  };
 }
 
 /**
@@ -408,11 +433,11 @@ async function capaMapaBase3d(E: Modulos, config: LayerConfig): Promise<Esri> {
  * Edificaciones 3D, recortadas con un SceneFilter («contains») al límite comunal ampliado.
  * `enCondicion` dice si el edificio quedó clasificado en un predio de la condición activa.
  */
-async function capaEdificios(E: Modulos, enCondicion: (oid: number) => string | null) {
+async function capaEdificios(E: Modulos, enCondicion: (oid: number) => string | null, bordes: boolean) {
   const capa = new E.SceneLayer({
     url: EDIFICIOS_3D.url,
     title: 'Edificaciones 3D',
-    renderer: { type: 'simple', symbol: SIMBOLO_EDIFICIO_GRIS },
+    renderer: rendererEdificios(new Map(), bordes),
     filter: filtroComunal(E, await recorteComunal(E)),
   });
   await capa.load();
@@ -420,10 +445,15 @@ async function capaEdificios(E: Modulos, enCondicion: (oid: number) => string | 
   const campos = EDIFICIOS_3D.campos.filter((c) => existentes.has(c.campo));
   capa.outFields = ['ObjectID', ...campos.map((c) => c.campo)];
   // Tabla con el mismo formato de las fichas del 2D; se omiten los campos vacíos, en 0 o «unknown».
-  const valor = (campo: string, v: unknown): string | null => {
+  const valor = (campo: string, v: unknown, at: Record<string, unknown>): string | null => {
     if (v == null || v === '' || v === 0 || v === 'unknown') return null;
-    if (campo === 'height' && typeof v === 'number') return `${formatearNumero(v, 1)} m`;
+    if (campo === 'height' && typeof v === 'number') {
+      // 3 m sin pisos informados es el valor por defecto de la capa, no una medición.
+      const sinPisos = !(Number(at.building_levels) > 0);
+      return v === EDIFICIOS_3D.alturaPorDefecto && sinPisos ? EDIFICIOS_3D.textoAlturaNoInformada : `${formatearNumero(v, 1)} m`;
+    }
     if (campo === 'building_levels' && typeof v === 'number') return formatearNumero(v, 0);
+    if (campo === 'source') return EDIFICIOS_3D.fuentes[String(v)] ?? String(v);
     if (campo === 'OSMID') return String(Math.round(Number(v)));
     return String(v);
   };
@@ -434,15 +464,16 @@ async function capaEdificios(E: Modulos, enCondicion: (oid: number) => string | 
       const at = e.graphic?.attributes ?? {};
       const condicion = typeof at.ObjectID === 'number' ? enCondicion(at.ObjectID) : null;
       const filas = [
-        ...campos.map((c) => [c.alias.replace(' (m)', ''), valor(c.campo, at[c.campo])] as const),
+        ...campos.map((c) => [c.alias.replace(' (m)', ''), valor(c.campo, at[c.campo], at)] as const),
+        ['Capa', EDIFICIOS_3D.nombreCapa] as const,
         ['Condición activa', condicion ? `En predio de «${condicion}»` : 'No está en predios de la condición'] as const,
       ]
         .filter(([, v]) => v !== null)
         .map(([a, v]) => `<tr><th>${escapar(a)}</th><td>${escapar(v!)}</td></tr>`)
         .join('');
       return contenidoHtml(
-        `<div class="popup popup-ficha"><table class="popup-table">${filas || '<tr><td>Sin atributos informados.</td></tr>'}</table>` +
-          `<p class="popup-note">${escapar(EDIFICIOS_3D.nota)}</p></div>`,
+        `<div class="popup popup-ficha"><table class="popup-table">${filas}</table>` +
+          `<p class="popup-note">${escapar(EDIFICIOS_3D.nota)} ${escapar(EDIFICIOS_3D.atribucion)}</p></div>`,
       );
     },
   };
@@ -505,11 +536,16 @@ export default function SceneView3D({
   const [herramienta, setHerramienta] = useState<Herramienta>(null);
   const [textoPendiente, setTextoPendiente] = useState<string | null>(null);
   const [nodoPendiente, setNodoPendiente] = useState<HTMLDivElement | null>(null);
-  // Calidad gráfica: «alta» (medium) por defecto en escritorio; «rápida» (low) siempre en celular
-  // y como opción en escritorio. Se recuerda en este navegador.
+  // Calidad gráfica: «auto» (según la distancia, por defecto) o «alta» (siempre medium); en celular,
+  // siempre «low». Se recuerda en este navegador. Ver modoDibujo.
   const [movil] = useState(esPantallaMovil);
-  const [calidad, setCalidad] = useState<Calidad>(() => (movil ? 'rapida' : leerCalidad()));
-  const calidadInicialRef = useRef(calidad);
+  const [calidad, setCalidad] = useState<Calidad>(() => (movil ? 'auto' : leerCalidad()));
+  const calidadRef = useRef(calidad);
+  calidadRef.current = calidad;
+  /** Modo de dibujo vigente (perfil de calidad y bordes de los edificios). */
+  const modoRef = useRef<ModoDibujo>(
+    modoDibujo(calidad, movil, encuadreInicial?.zoom ?? ZOOM_COMUNA, (encuadreInicial?.zoom ?? ZOOM_COMUNA) >= ZOOM_CERCA),
+  );
 
   const track = <T,>(p: Promise<T>) => {
     pendingRef.current += 1;
@@ -584,7 +620,7 @@ export default function SceneView3D({
             }
           }
         }
-        if (cambios && edificiosRef.current === capa) capa.renderer = rendererEdificios(colores);
+        if (cambios && edificiosRef.current === capa) capa.renderer = rendererEdificios(colores, modoRef.current.bordes);
       })
       .catch((err) => console.warn(`[Visor DS 68] No se pudieron colorear los edificios: ${String(err)}`));
   };
@@ -629,6 +665,18 @@ export default function SceneView3D({
     });
   };
 
+  /** Ajusta el perfil de calidad y los bordes de los edificios a la distancia de la cámara. */
+  const aplicarModo = () => {
+    const view = viewRef.current;
+    if (!view) return;
+    const modo = modoDibujo(calidadRef.current, movil, view.zoom, modoRef.current.cerca);
+    const bordesCambian = modo.bordes !== modoRef.current.bordes;
+    modoRef.current = modo;
+    if (view.qualityProfile !== modo.perfil) view.qualityProfile = modo.perfil;
+    const capa = edificiosRef.current;
+    if (bordesCambian && capa) capa.renderer = rendererEdificios(coloresRef.current, modo.bordes);
+  };
+
   /** Orden de dibujo sobre el terreno: el mismo del panel (los edificios van siempre en 3D). */
   const reorder = () => {
     const view = viewRef.current;
@@ -668,7 +716,7 @@ export default function SceneView3D({
           map: new E.Map({ basemap: new E.Basemap({ baseLayers: [capaBase] }), ground: 'world-elevation' }),
           center: [lon, lat],
           zoom: encuadreInicial?.zoom ?? METADATA.vistaInicial.zoom,
-          qualityProfile: PERFIL_CALIDAD[calidadInicialRef.current],
+          qualityProfile: modoRef.current.perfil,
           environment: { starsEnabled: false },
           ui: { components: ['attribution'] },
           popup: { dockEnabled: false, defaultPopupTemplateEnabled: false },
@@ -709,6 +757,21 @@ export default function SceneView3D({
             },
           ),
         );
+        // Calidad y bordes según la distancia: se revisan con la cámara detenida (tras una breve espera).
+        let esperaModo: ReturnType<typeof setTimeout> | undefined;
+        const manijaModo = E.reactiveUtils.watch(
+          () => view.stationary,
+          (quieta: boolean) => {
+            clearTimeout(esperaModo);
+            if (quieta) esperaModo = setTimeout(() => view.stationary && aplicarModo(), ESPERA_COLOREADO_MS);
+          },
+        );
+        manijas.push({
+          remove: () => {
+            clearTimeout(esperaModo);
+            manijaModo.remove();
+          },
+        });
         cb.current.registrarCaptura(async () => (await view.takeScreenshot({ format: 'png' })).dataUrl);
         if (import.meta.env.DEV) (window as unknown as { __escena: Esri }).__escena = view;
         setLista(true);
@@ -787,7 +850,7 @@ export default function SceneView3D({
       if (refsRef.current.has(config.id)) continue;
       const crear =
         config.escena3d === 'edificios'
-          ? capaEdificios(E, (oid) => (coloresRef.current.has(oid) ? condicionActRef.current.nombre : null))
+          ? capaEdificios(E, (oid) => (coloresRef.current.has(oid) ? condicionActRef.current.nombre : null), modoRef.current.bordes)
           : config.escena3d
             ? capaMapaBase3d(E, config)
             : loadGeoJSON(config.url).then((data) => capaReferencia(E, config, data.features));
@@ -850,7 +913,7 @@ export default function SceneView3D({
 
   useEffect(() => {
     const view = viewRef.current;
-    if (lista && view && view.qualityProfile !== PERFIL_CALIDAD[calidad]) view.qualityProfile = PERFIL_CALIDAD[calidad];
+    if (lista && view) aplicarModo();
     try {
       if (!movil) localStorage.setItem(CLAVE_CALIDAD, calidad);
     } catch {
@@ -892,21 +955,21 @@ export default function SceneView3D({
             {!movil && (
               <button
                 type="button"
-                className={`scene-quality${calidad === 'rapida' ? ' is-active' : ''}`}
-                aria-pressed={calidad === 'rapida'}
+                className={`scene-quality${calidad === 'alta' ? ' is-active' : ''}`}
+                aria-pressed={calidad === 'alta'}
                 title={
                   calidad === 'alta'
-                    ? 'Calidad alta. Clic para calidad rápida: más fluida, pero de lejos no se muestran los edificios'
-                    : 'Calidad rápida: más fluida, pero de lejos no se muestran los edificios. Clic para calidad alta'
+                    ? 'Calidad alta siempre (más detalle, menos fluida). Clic para calidad automática'
+                    : 'Calidad automática: más fluida de cerca y completa de lejos. Clic para calidad alta siempre'
                 }
-                onClick={() => setCalidad((c) => (c === 'alta' ? 'rapida' : 'alta'))}
+                onClick={() => setCalidad((c) => (c === 'alta' ? 'auto' : 'alta'))}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   {/* Velocímetro: modo rápido */}
                   <path d="M4 16a8 8 0 0 1 16 0" fill="none" stroke="currentColor" strokeWidth="1.8" />
                   <path d="M12 16l4.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
-                <span>Calidad {calidad === 'alta' ? 'alta' : 'rápida'}</span>
+                <span>Calidad {calidad === 'alta' ? 'alta' : 'automática'}</span>
               </button>
             )}
           </div>,

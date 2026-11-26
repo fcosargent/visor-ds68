@@ -155,7 +155,27 @@ export const EDIFICIOS_3D = {
     { campo: 'source', alias: 'Fuente del dato' },
     { campo: 'OSMID', alias: 'ID OpenStreetMap' },
   ],
-  nota: 'Altura según Esri 3D Buildings (Esri Community Maps, OpenStreetMap y otras fuentes); cuando no hay dato medido, el volumen usa un valor estimado. Dato referencial.',
+  /**
+   * Texto legible para cada valor del campo `source` (en la comuna aparecen estos cuatro). Un valor
+   * que no esté aquí se muestra tal cual.
+   */
+  fuentes: {
+    TomTom: 'TomTom (proveedor de cartografía)',
+    'Google Open Buildings': 'Google Open Buildings (CC BY 4.0)',
+    'Microsoft ML Buildings': 'Microsoft (huellas de edificios)',
+    OpenStreetMap: 'OpenStreetMap (mapa colaborativo)',
+  } as Record<string, string>,
+  /**
+   * Altura por defecto: los edificios sin altura informada se dibujan con 3 m (todos los de Google y
+   * Microsoft, y muchos de OpenStreetMap). Con 3 m y sin pisos, la ventana dice que no está informada.
+   */
+  alturaPorDefecto: 3,
+  textoAlturaNoInformada: 'No informada (se dibuja con 3 m)',
+  nombreCapa: 'Esri 3D Buildings (mapa base 3D de Esri)',
+  /** Atribución publicada por Esri en la ficha del ítem. */
+  atribucion:
+    'Fuentes de la capa según Esri: TomTom, Maxar, Esri Community Maps, © colaboradores de OpenStreetMap (ODbL), Microsoft y Google Open Buildings (CC BY 4.0).',
+  nota: 'Altura referencial: cuando la fuente no la informa, el volumen usa un valor por defecto.',
 };
 
 const ESTACIONES_URL = `${DATA}estaciones_metro.geojson`;
